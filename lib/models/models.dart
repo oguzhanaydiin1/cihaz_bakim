@@ -199,9 +199,25 @@ class AppSettings {
     List<String>? excluded,
     List<String>? customRoots,
     List<HistoryEntry>? history,
+    this.language = 'system',
+    this.sendErrorReports = true,
+    this.autoUpdate = true,
+    this.installId = '',
   })  : excluded = excluded ?? [],
         customRoots = customRoots ?? [],
         history = history ?? [];
+
+  /// 'system', 'tr' veya 'en'
+  String language;
+
+  /// Beklenmeyen hatalar isimsiz olarak geliştiriciye gönderilsin mi?
+  bool sendErrorReports;
+
+  /// Açılışta yeni sürüm denetlensin mi?
+  bool autoUpdate;
+
+  /// Hata raporlarını gruplamak için rastgele kurulum kimliği (kişiyi tanımlamaz).
+  String installId;
 
   static const defaultMinDuplicateSize = 100 * 1024;
 
@@ -224,6 +240,10 @@ class AppSettings {
         'excluded': excluded,
         'customRoots': customRoots,
         'history': history.map((h) => h.toJson()).toList(),
+        'language': language,
+        'sendErrorReports': sendErrorReports,
+        'autoUpdate': autoUpdate,
+        'installId': installId,
       };
 
   factory AppSettings.fromJson(Map<String, dynamic> j) => AppSettings(
@@ -232,6 +252,10 @@ class AppSettings {
         excluded: (j['excluded'] as List?)?.whereType<String>().toList(),
         customRoots: (j['customRoots'] as List?)?.whereType<String>().toList(),
         history: (j['history'] as List?)?.whereType<Map<String, dynamic>>().map(HistoryEntry.fromJson).toList(),
+        language: j['language'] as String? ?? 'system',
+        sendErrorReports: j['sendErrorReports'] as bool? ?? true,
+        autoUpdate: j['autoUpdate'] as bool? ?? true,
+        installId: j['installId'] as String? ?? '',
       );
 }
 
@@ -482,4 +506,43 @@ class LiveStats {
   /// Termal bölge sıcaklığı (°C). null = bu bilgisayar paylaşmıyor.
   final double? temperature;
   final List<ProcessMemory> topMemory;
+}
+
+// ---------------------------------------------------------------------------
+// İzin kontrolü
+// ---------------------------------------------------------------------------
+
+enum PermissionKind { camera, microphone, location }
+
+/// Bir uygulamanın kamera/mikrofon/konum erişim kaydı.
+class PermissionUse {
+  const PermissionUse({
+    required this.kind,
+    required this.appName,
+    required this.detail,
+    required this.storeApp,
+    required this.allowed,
+    this.lastUsed,
+    this.inUse = false,
+  });
+
+  final PermissionKind kind;
+  final String appName;
+
+  /// Masaüstü uygulamalarında dosya yolu, mağaza uygulamalarında paket adı.
+  final String detail;
+  final bool storeApp;
+  final bool allowed;
+  final DateTime? lastUsed;
+
+  /// Şu anda kullanıyor mu?
+  final bool inUse;
+}
+
+class PermissionOverview {
+  const PermissionOverview({required this.enabled, required this.uses});
+
+  /// Her izin türü için Windows genelinde açık mı (null = bilinmiyor).
+  final Map<PermissionKind, bool?> enabled;
+  final List<PermissionUse> uses;
 }

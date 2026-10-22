@@ -2,11 +2,19 @@ import 'package:flutter/material.dart';
 
 import 'core/theme.dart';
 import 'services/cleaner_service.dart';
+import 'services/error_reporter.dart';
 import 'state/app_state.dart';
 import 'screens/shell.dart';
 
 void main() {
-  final state = AppState(CleanerService.create())..init();
+  WidgetsFlutterBinding.ensureInitialized();
+  final state = AppState(CleanerService.create());
+  ErrorReporter.init(
+    logPath: state.service.errorLogPath,
+    canSend: () => state.settings.sendErrorReports,
+    installId: () => state.settings.installId,
+  );
+  state.init();
   runApp(CihazBakimApp(state: state));
 }
 

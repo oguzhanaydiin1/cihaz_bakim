@@ -105,4 +105,19 @@ abstract class CleanerService {
 
   /// Dinlendiği sürece canlı ölçüm üretir; dinleme bırakılınca ölçüm durur.
   Stream<LiveStats> liveStats();
+
+  // ---- İzin kontrolü ----
+
+  Future<PermissionOverview?> permissions();
+
+  /// İlgili Windows gizlilik ayarları sayfasını açar.
+  Future<void> openPrivacySettings(PermissionKind kind);
+
+  // ---- Genel ----
+
+  /// Bağlantıyı (https:// veya mailto:) varsayılan programla açar.
+  Future<void> openUrl(String url);
+
+  /// Hata günlüğünün yolu. null ise günlük tutulmaz.
+  String? get errorLogPath;
 }

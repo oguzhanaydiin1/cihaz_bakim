@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'i18n.dart';
 import 'platform.dart';
 
 enum ModuleId {
@@ -18,32 +19,59 @@ enum ModuleId {
   shredder,
   organizer,
   settings,
+  support,
+  about,
 }
 
 enum Availability { both, windowsOnly, androidOnly }
+
+/// Menü grupları, iki dilde.
+enum ModuleGroup {
+  general('Genel', 'General'),
+  storage('Depolama', 'Storage'),
+  system('Sistem', 'System'),
+  privacy('Gizlilik', 'Privacy'),
+  organize('Düzen', 'Organize'),
+  app('Uygulama', 'App');
+
+  const ModuleGroup(this.tr, this.en);
+  final String tr;
+  final String en;
+  String get label => L.t(tr, en);
+}
 
 class ModuleInfo {
   const ModuleInfo({
     required this.id,
     required this.group,
-    required this.name,
+    required this.nameTr,
+    required this.nameEn,
     required this.icon,
     required this.version,
     this.availability = Availability.both,
-    this.description = '',
-    this.plan = const [],
+    this.descTr = '',
+    this.descEn = '',
+    this.planTr = const [],
+    this.planEn = const [],
   });
 
   final ModuleId id;
-  final String group;
-  final String name;
+  final ModuleGroup group;
+  final String nameTr;
+  final String nameEn;
   final IconData icon;
 
   /// Modülün geleceği sürüm. 1 = ilk sürümde çalışıyor.
   final int version;
   final Availability availability;
-  final String description;
-  final List<String> plan;
+  final String descTr;
+  final String descEn;
+  final List<String> planTr;
+  final List<String> planEn;
+
+  String get name => L.t(nameTr, nameEn);
+  String get description => L.t(descTr, descEn);
+  List<String> get plan => L.isTr ? planTr : planEn;
 
   bool get isReady => version == 1;
 
@@ -60,98 +88,157 @@ class ModuleInfo {
 }
 
 const modules = <ModuleInfo>[
-  ModuleInfo(id: ModuleId.smartScan, group: 'Genel', name: 'Akıllı Tarama', icon: Icons.manage_search, version: 1),
-  ModuleInfo(id: ModuleId.junk, group: 'Depolama', name: 'Gereksiz Dosyalar', icon: Icons.delete_outline, version: 1),
-  ModuleInfo(id: ModuleId.duplicates, group: 'Depolama', name: 'Kopya Dosyalar', icon: Icons.file_copy_outlined, version: 1),
-  ModuleInfo(id: ModuleId.diskMap, group: 'Depolama', name: 'Disk Haritası', icon: Icons.dashboard_outlined, version: 1),
+  ModuleInfo(
+    id: ModuleId.smartScan,
+    group: ModuleGroup.general,
+    nameTr: 'Akıllı Tarama',
+    nameEn: 'Smart Scan',
+    icon: Icons.manage_search,
+    version: 1,
+  ),
+  ModuleInfo(
+    id: ModuleId.junk,
+    group: ModuleGroup.storage,
+    nameTr: 'Gereksiz Dosyalar',
+    nameEn: 'Junk Files',
+    icon: Icons.delete_outline,
+    version: 1,
+  ),
+  ModuleInfo(
+    id: ModuleId.duplicates,
+    group: ModuleGroup.storage,
+    nameTr: 'Kopya Dosyalar',
+    nameEn: 'Duplicate Files',
+    icon: Icons.file_copy_outlined,
+    version: 1,
+  ),
+  ModuleInfo(
+    id: ModuleId.diskMap,
+    group: ModuleGroup.storage,
+    nameTr: 'Disk Haritası',
+    nameEn: 'Disk Map',
+    icon: Icons.dashboard_outlined,
+    version: 1,
+  ),
   ModuleInfo(
     id: ModuleId.media,
-    group: 'Depolama',
-    name: 'Medya Küçültücü',
+    group: ModuleGroup.storage,
+    nameTr: 'Medya Küçültücü',
+    nameEn: 'Photo Compressor',
     icon: Icons.photo_size_select_large,
     version: 1,
-    description: 'Fotoğraf ve videoları kaliteyi gözle görülür düşürmeden sıkıştırır.',
-    plan: ['Toplu sıkıştırma, önce/sonra karşılaştırma', 'Orijinali yedekleme seçeneği', 'Videolarda çözünürlük düşürme'],
   ),
   ModuleInfo(
     id: ModuleId.screenshots,
-    group: 'Depolama',
-    name: 'Ekran Görüntüleri',
+    group: ModuleGroup.storage,
+    nameTr: 'Ekran Görüntüleri',
+    nameEn: 'Screenshots',
     icon: Icons.screenshot_outlined,
     version: 2,
     availability: Availability.androidOnly,
-    description: 'Biriken ekran görüntülerini kaydırarak hızlıca gözden geçirip silmenizi sağlar.',
-    plan: ['Sağa kaydır: tut, sola kaydır: sil', '30 günden eski görüntüleri toplu seçme', 'Metin içeren görüntüleri ayırma'],
+    descTr: 'Biriken ekran görüntülerini kaydırarak hızlıca gözden geçirip silmenizi sağlar.',
+    descEn: 'Swipe through piled-up screenshots and delete the ones you don’t need.',
+    planTr: ['Sağa kaydır: tut, sola kaydır: sil', '30 günden eski görüntüleri toplu seçme', 'Metin içeren görüntüleri ayırma'],
+    planEn: ['Swipe right to keep, left to delete', 'Select screenshots older than 30 days at once', 'Separate screenshots that contain text'],
   ),
-  ModuleInfo(id: ModuleId.system, group: 'Sistem', name: 'Sistem Bilgisi', icon: Icons.memory, version: 1),
+  ModuleInfo(
+    id: ModuleId.system,
+    group: ModuleGroup.system,
+    nameTr: 'Sistem Bilgisi',
+    nameEn: 'System Info',
+    icon: Icons.memory,
+    version: 1,
+  ),
   ModuleInfo(
     id: ModuleId.apps,
-    group: 'Sistem',
-    name: 'Uygulama Kaldırıcı',
+    group: ModuleGroup.system,
+    nameTr: 'Uygulama Kaldırıcı',
+    nameEn: 'Uninstaller',
     icon: Icons.apps,
     version: 1,
-    description: 'Uygulamaları boyutuna ve son kullanım tarihine göre listeler.',
-    plan: [
-      'Uzun süredir açılmayan uygulamaları öne çıkarma',
-      'Windows: kaldırma sonrası kalan artıkları temizleme',
-      'Android: ilgili uygulamanın depolama ayarına yönlendirme',
-    ],
   ),
   ModuleInfo(
     id: ModuleId.startup,
-    group: 'Sistem',
-    name: 'Başlangıç Programları',
+    group: ModuleGroup.system,
+    nameTr: 'Başlangıç Programları',
+    nameEn: 'Startup Apps',
     icon: Icons.power_settings_new,
     version: 1,
     availability: Availability.windowsOnly,
   ),
   ModuleInfo(
     id: ModuleId.health,
-    group: 'Sistem',
-    name: 'Pil ve Sağlık',
+    group: ModuleGroup.system,
+    nameTr: 'Pil ve Sağlık',
+    nameEn: 'Battery & Health',
     icon: Icons.battery_std,
     version: 1,
-    description: 'Pil yıpranması, disk sağlığı ve sıcaklık bilgilerini tek ekranda gösterir.',
-    plan: ['Pil kapasitesinin ilk günle karşılaştırması', 'Disk SMART durumu (Windows)', 'Pili en çok tüketen uygulamalar (Android)'],
   ),
   ModuleInfo(
     id: ModuleId.permissions,
-    group: 'Gizlilik',
-    name: 'İzin Kontrolü',
+    group: ModuleGroup.privacy,
+    nameTr: 'İzin Kontrolü',
+    nameEn: 'App Permissions',
     icon: Icons.shield_outlined,
-    version: 3,
-    description: 'Hangi uygulamanın konum, kamera ve mikrofon izni olduğunu gösterir.',
-    plan: ['İzinleri uygulamaya ve izin türüne göre listeleme', 'Son kullanım zamanı', 'Ayarlara tek dokunuşla gitme'],
+    version: 1,
   ),
   ModuleInfo(
     id: ModuleId.metadata,
-    group: 'Gizlilik',
-    name: 'Konum Bilgisi Temizleyici',
+    group: ModuleGroup.privacy,
+    nameTr: 'Konum Bilgisi Temizleyici',
+    nameEn: 'Photo Location Remover',
     icon: Icons.location_off_outlined,
     version: 1,
-    description: 'Fotoğrafları paylaşmadan önce içindeki konum ve cihaz bilgilerini siler.',
-    plan: ['Toplu temizleme', 'Paylaşım menüsünden doğrudan kullanım (Android)', 'Sağ tık menüsü entegrasyonu (Windows)'],
   ),
   ModuleInfo(
     id: ModuleId.shredder,
-    group: 'Gizlilik',
-    name: 'Güvenli Silici',
+    group: ModuleGroup.privacy,
+    nameTr: 'Güvenli Silici',
+    nameEn: 'Secure Delete',
     icon: Icons.lock_outline,
     version: 3,
     availability: Availability.windowsOnly,
-    description: 'Hassas dosyaları geri getirilemeyecek şekilde siler.',
-    plan: ['Sürükle bırak ile silme', 'SSD için uygun silme yöntemi', 'Geri Dönüşüm Kutusu’nu güvenli boşaltma'],
+    descTr: 'Hassas dosyaları geri getirilemeyecek şekilde siler.',
+    descEn: 'Deletes sensitive files so they can’t be recovered.',
+    planTr: ['Sürükle bırak ile silme', 'SSD için uygun silme yöntemi', 'Geri Dönüşüm Kutusu’nu güvenli boşaltma'],
+    planEn: ['Drag and drop to delete', 'A deletion method suited to SSDs', 'Securely empty the Recycle Bin'],
   ),
   ModuleInfo(
     id: ModuleId.organizer,
-    group: 'Düzen',
-    name: 'Klasör Düzenleyici',
+    group: ModuleGroup.organize,
+    nameTr: 'Klasör Düzenleyici',
+    nameEn: 'Folder Organizer',
     icon: Icons.folder_outlined,
     version: 3,
-    description: 'İndirilenler klasörünü dosya türüne ve tarihe göre otomatik düzenler.',
-    plan: ['Kural tanımlama (ör. PDF’ler → Belgeler)', 'Zamanlanmış otomatik çalışma', 'Her işlemi geri alabilme'],
+    descTr: 'İndirilenler klasörünü dosya türüne ve tarihe göre otomatik düzenler.',
+    descEn: 'Automatically sorts your Downloads folder by file type and date.',
+    planTr: ['Kural tanımlama (ör. PDF’ler → Belgeler)', 'Zamanlanmış otomatik çalışma', 'Her işlemi geri alabilme'],
+    planEn: ['Your own rules (e.g. PDFs → Documents)', 'Runs automatically on a schedule', 'Every change can be undone'],
   ),
-  ModuleInfo(id: ModuleId.settings, group: 'Uygulama', name: 'Ayarlar', icon: Icons.settings_outlined, version: 1),
+  ModuleInfo(
+    id: ModuleId.settings,
+    group: ModuleGroup.app,
+    nameTr: 'Ayarlar',
+    nameEn: 'Settings',
+    icon: Icons.settings_outlined,
+    version: 1,
+  ),
+  ModuleInfo(
+    id: ModuleId.support,
+    group: ModuleGroup.app,
+    nameTr: 'İletişim ve Destek',
+    nameEn: 'Help & Contact',
+    icon: Icons.support_agent,
+    version: 1,
+  ),
+  ModuleInfo(
+    id: ModuleId.about,
+    group: ModuleGroup.app,
+    nameTr: 'Hakkında',
+    nameEn: 'About',
+    icon: Icons.info_outline,
+    version: 1,
+  ),
 ];
 
 ModuleInfo moduleById(ModuleId id) => modules.firstWhere((m) => m.id == id);

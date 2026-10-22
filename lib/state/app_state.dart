@@ -1,13 +1,16 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter/widgets.dart';
 
+import '../core/i18n.dart';
 import '../core/modules.dart';
 import '../models/models.dart';
 import '../services/cleaner_service.dart';
 import '../services/isolate_runner.dart';
 import '../services/settings_store.dart';
+import '../services/updater.dart';
 
 /// Uygulamanın tüm durumu. Ekranlar AppScope.of(context) ile erişir.
 class AppState extends ChangeNotifier {
@@ -27,6 +30,15 @@ class AppState extends ChangeNotifier {
 
   Future<void> init() async {
     settings = await store.load();
+    L.apply(language);
+    if (settings.installId.isEmpty) {
+      final r = math.Random.secure();
+      settings.installId = List.generate(16, (_) => r.nextInt(256).toRadixString(16).padLeft(2, '0')).join();
+      await store.save(settings);
+    }
+    if (settings.autoUpdate && Updater.supported) {
+      unawaited(checkForUpdates(silent: true));
+    }
     final defaults = service.defaultUserFolders();
     knownRoots
       ..clear()
@@ -682,6 +694,103 @@ class AppState extends ChangeNotifier {
 
   /// Başarılı olursa uygulama kapanıp yönetici olarak yeniden açılır.
   Future<bool> relaunchAsAdmin() => service.relaunchAsAdmin();
+
+  AppLanguage get language => switch (settings.language) {
+        'tr' => AppLanguage.tr,
+        'en' => AppLanguage.en,
+        _ => AppLanguage.system,
+      };
+
+  Future<void> setLanguage(AppLanguage value) async {
+    settings.language = value.name;
+    L.apply(value);
+    notifyListeners();
+    await store.save(settings);
+  }
+
+  Future<void> setSendErrorReports(bool value) async {
+    settings.sendErrorReports = value;
+    notifyListeners();
+    await store.save(settings);
+  }
+
+  Future<void> setAutoUpdate(bool value) async {
+    settings.autoUpdate = value;
+    notifyListeners();
+    await store.save(settings);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Güncelleme
+  // ---------------------------------------------------------------------------
+
+  UpdateStatus updateStatus = Updater.supported ? UpdateStatus.latest : UpdateStatus.unsupported;
+  UpdateInfo? update;
+  double downloadProgress = 0;
+  String? updateError;
+  DateTime? lastUpdateCheck;
+
+  /// [silent] ise bağlantı hatası ekranda gösterilmez (açılıştaki otomatik denetim).
+  Future<void> checkForUpdates({bool silent = false}) async {
+    if (!Updater.supported || updateStatus == UpdateStatus.checking || updateStatus == UpdateStatus.downloading) return;
+    updateStatus = UpdateStatus.checking;
+    updateError = null;
+    notifyListeners();
+    try {
+      update = await Updater.check();
+      updateStatus = update == null ? UpdateStatus.latest : UpdateStatus.available;
+      lastUpdateCheck = DateTime.now();
+    } catch (e) {
+      updateStatus = silent ? UpdateStatus.latest : UpdateStatus.error;
+      updateError = L.t('Güncelleme sunucusuna ulaşılamadı. İnternet bağlantını kontrol et.',
+          'Couldn’t reach the update server. Check your internet connection.');
+    }
+    notifyListeners();
+  }
+
+  /// Yeni sürümü indirir ve kurar. Başarılı olursa uygulama kapanıp yeni sürümle açılır.
+  Future<void> installUpdate() async {
+    final info = update;
+    if (info == null || updateStatus == UpdateStatus.downloading) return;
+    updateStatus = UpdateStatus.downloading;
+    downloadProgress = 0;
+    updateError = null;
+    notifyListeners();
+    try {
+      final path = await Updater.download(info, onProgress: (p) {
+        downloadProgress = p;
+        notifyListeners();
+      });
+      updateStatus = UpdateStatus.ready;
+      notifyListeners();
+      await Updater.install(path);
+    } catch (e) {
+      updateStatus = UpdateStatus.error;
+      updateError = L.t('Güncelleme indirilemedi: $e', 'The update couldn’t be downloaded: $e');
+      notifyListeners();
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // İzin kontrolü
+  // ---------------------------------------------------------------------------
+
+  PermissionOverview? permissionOverview;
+  bool permissionsBusy = false;
+  bool permissionsLoaded = false;
+
+  Future<void> loadPermissions() async {
+    if (permissionsBusy) return;
+    permissionsBusy = true;
+    notifyListeners();
+    try {
+      permissionOverview = await service.permissions();
+      permissionsLoaded = true;
+    } finally {
+      permissionsBusy = false;
+      notifyListeners();
+    }
+  }
 }
 
 class AppScope extends InheritedNotifier<AppState> {

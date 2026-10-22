@@ -282,4 +282,30 @@ class SampleCleaner implements CleanerService {
       );
     });
   }
+
+  // ---- İzin kontrolü ----
+
+  @override
+  Future<PermissionOverview?> permissions() async {
+    final now = DateTime.now();
+    return PermissionOverview(
+      enabled: const {PermissionKind.camera: true, PermissionKind.microphone: true, PermissionKind.location: true},
+      uses: [
+        PermissionUse(kind: PermissionKind.camera, appName: 'Kamera', detail: 'com.example.camera', storeApp: true, allowed: true, lastUsed: now.subtract(const Duration(hours: 2))),
+        PermissionUse(kind: PermissionKind.microphone, appName: 'Mesajlaşma', detail: 'com.example.chat', storeApp: true, allowed: true, inUse: true, lastUsed: now),
+        PermissionUse(kind: PermissionKind.location, appName: 'Harita', detail: 'com.example.maps', storeApp: true, allowed: true, lastUsed: now.subtract(const Duration(days: 1))),
+      ],
+    );
+  }
+
+  @override
+  Future<void> openPrivacySettings(PermissionKind kind) async {}
+
+  // ---- Genel ----
+
+  @override
+  Future<void> openUrl(String url) async {}
+
+  @override
+  String? get errorLogPath => null;
 }

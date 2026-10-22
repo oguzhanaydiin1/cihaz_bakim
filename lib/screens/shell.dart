@@ -5,6 +5,7 @@ import '../core/platform.dart';
 import '../core/theme.dart';
 import '../state/app_state.dart';
 import '../widgets/common.dart';
+import 'about_screen.dart';
 import 'apps_screen.dart';
 import 'coming_soon_screen.dart';
 import 'disk_map_screen.dart';
@@ -13,9 +14,11 @@ import 'health_screen.dart';
 import 'junk_screen.dart';
 import 'location_screen.dart';
 import 'media_screen.dart';
+import 'permissions_screen.dart';
 import 'settings_screen.dart';
 import 'smart_scan_screen.dart';
 import 'startup_screen.dart';
+import 'support_screen.dart';
 import 'system_screen.dart';
 
 /// Ana iskelet: geniş ekranda sol menü, dar ekranda (telefon) çekmece menü.
@@ -46,6 +49,12 @@ class Shell extends StatelessWidget {
         return const MediaScreen();
       case ModuleId.metadata:
         return const LocationScreen();
+      case ModuleId.permissions:
+        return const PermissionsScreen();
+      case ModuleId.support:
+        return const SupportScreen();
+      case ModuleId.about:
+        return const AboutScreen();
       default:
         return ComingSoonScreen(module: moduleById(id));
     }
@@ -120,14 +129,14 @@ class Sidebar extends StatelessWidget {
       ),
     ];
 
-    String? lastGroup;
+    ModuleGroup? lastGroup;
     for (final m in items) {
       if (m.group != lastGroup) {
         lastGroup = m.group;
         children.add(Padding(
           padding: const EdgeInsets.fromLTRB(12, 16, 12, 6),
           child: Text(
-            m.group.toUpperCase(),
+            m.group.label.toUpperCase(),
             style: const TextStyle(color: AppColors.navLabel, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1),
           ),
         ));

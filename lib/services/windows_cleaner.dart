@@ -903,4 +903,114 @@ while ($true) {
       return null;
     }
   }
+
+  // ---- İzin kontrolü ----
+
+  // Windows, kamera/mikrofon/konum erişimlerini ConsentStore anahtarında tutar:
+  // Value = Allow/Deny, LastUsedTimeStart/Stop = son kullanımın başlangıç ve bitişi (FILETIME).
+  static const _permissionScript = r"""
+$out = New-Object System.Collections.ArrayList
+$base = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore'
+function Add-App($cap, $key, $display, $store) {
+  $p = Get-ItemProperty -LiteralPath $key.PSPath -ErrorAction SilentlyContinue
+  if (-not $p) { return }
+  [void]$out.Add([pscustomobject]@{
+    cap = $cap; kind = $(if ($store) { 'store' } else { 'desktop' }); name = $display
+    value = [string]$p.Value; start = [int64]$p.LastUsedTimeStart; stop = [int64]$p.LastUsedTimeStop
+  })
+}
+foreach ($cap in @('webcam', 'microphone', 'location')) {
+  $root = Join-Path $base $cap
+  if (-not (Test-Path -LiteralPath $root)) { continue }
+  $g = Get-ItemProperty -LiteralPath $root -ErrorAction SilentlyContinue
+  [void]$out.Add([pscustomobject]@{ cap = $cap; kind = 'global'; name = ''; value = [string]$g.Value; start = 0; stop = 0 })
+  foreach ($k in Get-ChildItem -LiteralPath $root -ErrorAction SilentlyContinue) {
+    if ($k.PSChildName -eq 'NonPackaged') {
+      foreach ($d in Get-ChildItem -LiteralPath $k.PSPath -ErrorAction SilentlyContinue) {
+        Add-App $cap $d ($d.PSChildName -replace '#', '\') $false
+      }
+    } else {
+      Add-App $cap $k $k.PSChildName $true
+    }
+  }
+}
+ConvertTo-Json -InputObject @($out) -Compress -Depth 3
+""";
+
+  static DateTime? _fileTime(int ft) {
+    if (ft <= 0) return null;
+    return DateTime.fromMicrosecondsSinceEpoch(ft ~/ 10 - 11644473600000000, isUtc: true).toLocal();
+  }
+
+  /// "Microsoft.WindowsCamera_8wekyb3d8bbwe" → "WindowsCamera"
+  static String _storeName(String package) {
+    var n = package.split('_').first;
+    if (n.startsWith('Microsoft.')) n = n.substring('Microsoft.'.length);
+    return n;
+  }
+
+  @override
+  Future<PermissionOverview?> permissions() async {
+    final out = await _ps(_permissionScript);
+    try {
+      final data = jsonDecode(out);
+      if (data is! List) return null;
+      const caps = {'webcam': PermissionKind.camera, 'microphone': PermissionKind.microphone, 'location': PermissionKind.location};
+      final enabled = <PermissionKind, bool?>{};
+      final uses = <PermissionUse>[];
+      for (final e in data.whereType<Map<String, dynamic>>()) {
+        final kind = caps[e['cap']];
+        if (kind == null) continue;
+        final value = (e['value'] as String? ?? '').toLowerCase();
+        if (e['kind'] == 'global') {
+          enabled[kind] = value.isEmpty ? null : value != 'deny';
+          continue;
+        }
+        final name = e['name'] as String? ?? '';
+        if (name.isEmpty) continue;
+        final store = e['kind'] == 'store';
+        final start = (e['start'] as num?)?.toInt() ?? 0;
+        final stop = (e['stop'] as num?)?.toInt() ?? 0;
+        uses.add(PermissionUse(
+          kind: kind,
+          appName: store ? _storeName(name) : name.split(r'\').last,
+          detail: name,
+          storeApp: store,
+          allowed: value != 'deny',
+          lastUsed: _fileTime(start > stop ? start : stop),
+          inUse: start > 0 && start > stop,
+        ));
+      }
+      uses.sort((a, b) {
+        if (a.inUse != b.inUse) return a.inUse ? -1 : 1;
+        final la = a.lastUsed?.millisecondsSinceEpoch ?? 0;
+        final lb = b.lastUsed?.millisecondsSinceEpoch ?? 0;
+        return lb.compareTo(la);
+      });
+      return PermissionOverview(enabled: enabled, uses: uses);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  Future<void> openPrivacySettings(PermissionKind kind) async {
+    final page = switch (kind) {
+      PermissionKind.camera => 'privacy-webcam',
+      PermissionKind.microphone => 'privacy-microphone',
+      PermissionKind.location => 'privacy-location',
+    };
+    await _ps(r'Start-Process -FilePath $env:HC_FILE', env: {'HC_FILE': 'ms-settings:$page'});
+  }
+
+  // ---- Genel ----
+
+  @override
+  Future<void> openUrl(String url) async {
+    if (!(url.startsWith('https://') || url.startsWith('mailto:'))) return;
+    await _ps(r'Start-Process -FilePath $env:HC_FILE', env: {'HC_FILE': url});
+  }
+
+  @override
+  String? get errorLogPath => _roaming.isEmpty ? null : _join(_roaming, r'HarrierCleaner\errors.log');
 }
