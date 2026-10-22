@@ -1,0 +1,28 @@
+# Her gönderimde kodu GitHub'ın Linux makinesinde analiz eder ve testleri çalıştırır.
+# Derleme hataları kullanıcıya ulaşmadan burada yakalanır.
+name: Kontrol
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: kontrol-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter --version
+      - run: flutter pub get
+      - name: Analiz
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+      - name: Testler
+        run: flutter test
