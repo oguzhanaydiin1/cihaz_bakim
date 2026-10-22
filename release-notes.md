@@ -1,6 +1,4 @@
-İlk sürüm.
+Düzeltme sürümü.
 
-- Akıllı Tarama, Gereksiz Dosyalar, Kopya Dosyalar, Disk Haritası, Medya Küçültücü
-- Sistem Bilgisi, Uygulama Kaldırıcı, Başlangıç Programları, Pil ve Sağlık
-- İzin Kontrolü, Konum Bilgisi Temizleyici
-- Türkçe ve İngilizce arayüz, otomatik güncelleme
+- Medya Küçültücü ve Konum Bilgisi Temizleyici'de "Klasör seç" düğmesi, OneDrive yedeklemesi açık olan bilgisayarlarda pencereyi açmıyordu. Düzeltildi.
+- Bu ekranlar artık Resimler klasörünün gerçek yerini (ör. OneDrive\Resimler) kullanıyor.

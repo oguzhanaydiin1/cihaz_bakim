@@ -2,7 +2,7 @@
 /// "İletişim ve Destek" ile "Hakkında" ekranlarında gösterilir.
 class AppInfo {
   /// pubspec.yaml'daki sürümle aynı olmalı (otomatik kontrol bunu denetler).
-  static const version = '0.1.0';
+  static const version = '0.1.1';
 
   static const name = 'Harrier Cleaner';
   static const company = 'OA Labs';

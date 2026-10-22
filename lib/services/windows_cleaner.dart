@@ -658,7 +658,34 @@ ConvertTo-Json -InputObject @($out) -Compress -Depth 3
   // ---- Fotoğraflar ----
 
   @override
-  String defaultPicturesFolder() => _user.isNotEmpty ? _join(_user, 'Pictures') : defaultUsageRoot();
+  String defaultPicturesFolder() => _picturesFolder ??= _findPicturesFolder();
+
+  String? _picturesFolder;
+
+  /// Resimler klasörünün gerçek yeri. OneDrive yedeklemesi açıksa Pictures klasörü
+  /// "OneDrive\Resimler" gibi başka bir yere taşınmış olur; Windows bunu kayıt defterinde tutar.
+  String _findPicturesFolder() {
+    try {
+      final r = Process.runSync('reg', [
+        'query',
+        r'HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders',
+        '/v',
+        'My Pictures',
+      ]);
+      final m = RegExp(r'My Pictures\s+REG_(?:EXPAND_)?SZ\s+(.+)').firstMatch('${r.stdout}');
+      if (m != null) {
+        final path = m.group(1)!.trim().replaceAllMapped(RegExp(r'%([^%]+)%'), (x) => _env[x[1]!] ?? x[0]!);
+        if (Directory(path).existsSync()) return path;
+      }
+    } catch (_) {}
+    for (final candidate in [
+      if (_user.isNotEmpty) _join(_user, 'Pictures'),
+      if ((_env['OneDrive'] ?? '').isNotEmpty) _join(_env['OneDrive']!, 'Pictures'),
+    ]) {
+      if (Directory(candidate).existsSync()) return candidate;
+    }
+    return defaultUsageRoot();
+  }
 
   @override
   Future<List<PhotoFile>?> findPhotos(String root, {int minSize = 1024 * 1024, ProgressReporter? onProgress, CancelToken? token}) =>
