@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/widgets.dart';
@@ -588,6 +589,64 @@ class AppState extends ChangeNotifier {
       gpsBusy = false;
       _end(t);
       notifyListeners();
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Sistem bilgisi
+  // ---------------------------------------------------------------------------
+
+  /// Grafiklerde tutulan nokta sayısı (~1,5 sn aralıkla yaklaşık 1,5 dakika).
+  static const historyLength = 60;
+
+  SystemInfo? systemInfo;
+  LiveStats? live;
+  final cpuHistory = <double>[];
+  final ramHistory = <double>[];
+  final gpuHistory = <double>[];
+  StreamSubscription<LiveStats>? _liveSub;
+  int _monitorUsers = 0;
+
+  double? get ramPercent {
+    final total = systemInfo?.totalRam ?? 0;
+    final l = live;
+    if (total <= 0 || l == null) return null;
+    return ((total - l.ramAvailable) / total * 100).clamp(0.0, 100.0);
+  }
+
+  void _push(List<double> list, double v) {
+    list.add(v);
+    if (list.length > historyLength) list.removeAt(0);
+  }
+
+  /// Ekran açıldığında çağrılır; ekran kapanınca [stopSystemMonitor] ile durdurulur.
+  Future<void> startSystemMonitor() async {
+    _monitorUsers++;
+    if (_liveSub != null) return;
+    if (systemInfo == null) {
+      systemInfo = await service.systemInfo();
+      notifyListeners();
+    }
+    if (_monitorUsers == 0 || _liveSub != null) return; // bu arada ekran kapandıysa başlatma
+    _liveSub = service.liveStats().listen(
+      (s) {
+        live = s;
+        _push(cpuHistory, s.cpuPercent);
+        final ram = ramPercent;
+        if (ram != null) _push(ramHistory, ram);
+        final gpu = s.gpuPercent;
+        if (gpu != null) _push(gpuHistory, gpu);
+        notifyListeners();
+      },
+      onError: (_) {},
+    );
+  }
+
+  void stopSystemMonitor() {
+    if (_monitorUsers > 0) _monitorUsers--;
+    if (_monitorUsers == 0) {
+      _liveSub?.cancel();
+      _liveSub = null;
     }
   }
 

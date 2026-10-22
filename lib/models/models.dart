@@ -398,3 +398,88 @@ class GpsPhoto {
     return '${lat.toStringAsFixed(4)}, ${lon.toStringAsFixed(4)}';
   }
 }
+
+// ---------------------------------------------------------------------------
+// Sistem bilgisi
+// ---------------------------------------------------------------------------
+
+class GpuInfo {
+  const GpuInfo({required this.name, required this.memoryBytes});
+  final String name;
+
+  /// 0 = bilinmiyor
+  final int memoryBytes;
+}
+
+/// Bir kez okunan donanım ve sistem bilgileri.
+class SystemInfo {
+  const SystemInfo({
+    required this.cpuName,
+    required this.cores,
+    required this.threads,
+    required this.maxMhz,
+    required this.totalRam,
+    required this.osName,
+    required this.osBuild,
+    required this.gpus,
+    this.bootTime,
+    this.manufacturer = '',
+    this.model = '',
+  });
+
+  final String cpuName;
+  final int cores;
+  final int threads;
+  final int maxMhz;
+  final int totalRam;
+  final String osName;
+  final String osBuild;
+  final List<GpuInfo> gpus;
+  final DateTime? bootTime;
+  final String manufacturer;
+  final String model;
+}
+
+class ProcessMemory {
+  const ProcessMemory({required this.name, required this.bytes, required this.count});
+  final String name;
+  final int bytes;
+
+  /// Aynı isimli işlem sayısı (ör. tarayıcının sekmeleri).
+  final int count;
+}
+
+/// Birkaç saniyede bir yenilenen canlı ölçümler.
+class LiveStats {
+  const LiveStats({
+    required this.cpuPercent,
+    required this.cpuMhz,
+    required this.ramAvailable,
+    this.gpuPercent,
+    required this.diskRead,
+    required this.diskWrite,
+    required this.netDown,
+    required this.netUp,
+    this.temperature,
+    this.topMemory = const [],
+  });
+
+  final double cpuPercent;
+
+  /// Anlık işlemci hızı (0 = bilinmiyor).
+  final int cpuMhz;
+  final int ramAvailable;
+
+  /// null = ekran kartı ölçümü yok
+  final double? gpuPercent;
+
+  /// bayt/saniye
+  final int diskRead;
+  final int diskWrite;
+  final int netDown;
+  final int netUp;
+
+  /// Termal bölge sıcaklığı (°C). null = bu bilgisayar paylaşmıyor.
+  final double? temperature;
+  final List<ProcessMemory> topMemory;
+}

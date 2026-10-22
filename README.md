@@ -13,6 +13,7 @@ Windows ve Android için tek kod tabanlı Flutter uygulaması. Bu ilk sürümde 
 | Medya Küçültücü | Gerçek (JPEG fotoğraflar; orijinaller Geri Dönüşüm Kutusu'na yedeklenir) | Örnek veri |
 | Pil ve Sağlık | Gerçek (pil kapasitesi ve döngü, disk sağlık durumu) | Örnek veri |
 | Konum Bilgisi Temizleyici | Gerçek (EXIF/XMP konum kaydını kayıpsız siler) | Örnek veri |
+| Sistem Bilgisi | Gerçek (işlemci, bellek, ekran kartı, disk ve ağ kullanımı canlı; donanım bilgileri; termal bölge sıcaklığı varsa) | Örnek veri |
 | Ayarlar | Kalıcı geçmiş, hariç klasörler, en küçük dosya boyutu, yönetici olarak yeniden başlatma | Bellekte |
 
 Tüm uzun taramalar canlı dosya sayacı gösterir ve iptal edilebilir.

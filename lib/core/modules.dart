@@ -9,6 +9,7 @@ enum ModuleId {
   diskMap,
   media,
   screenshots,
+  system,
   apps,
   startup,
   health,
@@ -82,6 +83,7 @@ const modules = <ModuleInfo>[
     description: 'Biriken ekran görüntülerini kaydırarak hızlıca gözden geçirip silmenizi sağlar.',
     plan: ['Sağa kaydır: tut, sola kaydır: sil', '30 günden eski görüntüleri toplu seçme', 'Metin içeren görüntüleri ayırma'],
   ),
+  ModuleInfo(id: ModuleId.system, group: 'Sistem', name: 'Sistem Bilgisi', icon: Icons.memory, version: 1),
   ModuleInfo(
     id: ModuleId.apps,
     group: 'Sistem',

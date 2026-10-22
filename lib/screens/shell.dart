@@ -16,6 +16,7 @@ import 'media_screen.dart';
 import 'settings_screen.dart';
 import 'smart_scan_screen.dart';
 import 'startup_screen.dart';
+import 'system_screen.dart';
 
 /// Ana iskelet: geniş ekranda sol menü, dar ekranda (telefon) çekmece menü.
 class Shell extends StatelessWidget {
@@ -37,6 +38,8 @@ class Shell extends StatelessWidget {
         return const SettingsScreen();
       case ModuleId.apps:
         return const AppsScreen();
+      case ModuleId.system:
+        return const SystemScreen();
       case ModuleId.health:
         return const HealthScreen();
       case ModuleId.media:

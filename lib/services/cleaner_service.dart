@@ -98,4 +98,11 @@ abstract class CleanerService {
 
   /// (temizlenen, başarısız)
   Future<(int, int)> removeLocation(List<String> paths, {ProgressReporter? onProgress});
+
+  // ---- Sistem bilgisi ----
+
+  Future<SystemInfo?> systemInfo();
+
+  /// Dinlendiği sürece canlı ölçüm üretir; dinleme bırakılınca ölçüm durur.
+  Stream<LiveStats> liveStats();
 }

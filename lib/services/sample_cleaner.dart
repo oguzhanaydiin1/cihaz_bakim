@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import '../models/models.dart';
 import 'cleaner_service.dart';
 import 'isolate_runner.dart';
@@ -237,5 +239,47 @@ class SampleCleaner implements CleanerService {
   Future<(int, int)> removeLocation(List<String> paths, {ProgressReporter? onProgress}) async {
     await _simulate('Konum siliniyor', onProgress, null);
     return (paths.length, 0);
+  }
+
+  // ---- Sistem bilgisi ----
+
+  @override
+  Future<SystemInfo?> systemInfo() async => SystemInfo(
+        cpuName: 'Örnek 8 çekirdekli işlemci',
+        cores: 8,
+        threads: 8,
+        maxMhz: 2800,
+        totalRam: 8 * _gb,
+        osName: 'Android',
+        osBuild: '-',
+        gpus: const [GpuInfo(name: 'Örnek grafik birimi', memoryBytes: 0)],
+        bootTime: DateTime.now().subtract(const Duration(hours: 31, minutes: 12)),
+        manufacturer: 'Örnek',
+        model: 'Telefon',
+      );
+
+  @override
+  Stream<LiveStats> liveStats() {
+    var t = 0;
+    return Stream<LiveStats>.periodic(const Duration(milliseconds: 1500), (_) {
+      t++;
+      double wave(double base, double amp, double speed) => base + amp * math.sin(t * speed);
+      return LiveStats(
+        cpuPercent: wave(28, 18, 0.7).clamp(0.0, 100.0),
+        cpuMhz: wave(2100, 500, 0.5).round(),
+        ramAvailable: (wave(3.2, 0.4, 0.2) * _gb).round(),
+        gpuPercent: wave(12, 10, 0.9).clamp(0.0, 100.0),
+        diskRead: (wave(4, 4, 1.1) * _mb).round(),
+        diskWrite: (wave(2, 2, 0.8) * _mb).round(),
+        netDown: (wave(1.5, 1.4, 0.6) * _mb).round(),
+        netUp: (wave(0.3, 0.25, 0.4) * _mb).round(),
+        temperature: wave(38, 3, 0.3),
+        topMemory: const [
+          ProcessMemory(name: 'Tarayıcı', bytes: 1400 * _mb, count: 12),
+          ProcessMemory(name: 'Mesajlaşma', bytes: 520 * _mb, count: 3),
+          ProcessMemory(name: 'Sistem', bytes: 380 * _mb, count: 1),
+        ],
+      );
+    });
   }
 }

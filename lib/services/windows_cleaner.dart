@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -42,8 +43,8 @@ class WindowsCleaner implements CleanerService {
 
   // ---- PowerShell yardımcıları ----
 
-  /// Betiği -EncodedCommand ile çalıştırır: tırnak ve satır sonu kaçışı derdi olmaz.
-  Future<String> _ps(String script, {Map<String, String>? env}) async {
+  /// PowerShell'in -EncodedCommand için beklediği biçim: UTF-16LE + base64.
+  static String _encode(String script) {
     final full = '[Console]::OutputEncoding = New-Object System.Text.UTF8Encoding \$false\n$script';
     final units = full.codeUnits;
     final bytes = Uint8List(units.length * 2);
@@ -51,10 +52,15 @@ class WindowsCleaner implements CleanerService {
       bytes[i * 2] = units[i] & 0xff;
       bytes[i * 2 + 1] = units[i] >> 8;
     }
+    return base64Encode(bytes);
+  }
+
+  /// Betiği -EncodedCommand ile çalıştırır: tırnak ve satır sonu kaçışı derdi olmaz.
+  Future<String> _ps(String script, {Map<String, String>? env}) async {
     try {
       final r = await Process.run(
         'powershell',
-        ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', base64Encode(bytes)],
+        ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', _encode(script)],
         stdoutEncoding: utf8,
         environment: env,
       );
@@ -717,4 +723,184 @@ ConvertTo-Json -InputObject @($out) -Compress -Depth 3
   @override
   Future<(int, int)> removeLocation(List<String> paths, {ProgressReporter? onProgress}) async =>
       await stripGpsFrom(paths, onProgress: onProgress) ?? (0, paths.length);
+
+  // ---- Sistem bilgisi ----
+
+  static const _systemScript = r"""
+$cpu = Get-CimInstance Win32_Processor | Select-Object -First 1
+$os = Get-CimInstance Win32_OperatingSystem
+$cs = Get-CimInstance Win32_ComputerSystem
+$gpus = @(Get-CimInstance Win32_VideoController | ForEach-Object { [pscustomobject]@{ name = [string]$_.Name; ram = [int64]$_.AdapterRAM } })
+# AdapterRAM 4 GB'ta takılır; gerçek değer sürücü kaydında
+$vr = @{}
+Get-ChildItem 'HKLM:\SYSTEM\ControlSet001\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}' -ErrorAction SilentlyContinue | ForEach-Object {
+  try {
+    $p = Get-ItemProperty -LiteralPath $_.PSPath -ErrorAction Stop
+    $v = $p.'HardwareInformation.qwMemorySize'
+    if ($v -is [byte[]]) { $v = [BitConverter]::ToInt64($v, 0) }
+    if ($v -and $p.DriverDesc) { $vr[[string]$p.DriverDesc] = [int64]$v }
+  } catch {}
+}
+foreach ($g in $gpus) { if ($vr.ContainsKey($g.name)) { $g.ram = $vr[$g.name] } }
+[pscustomobject]@{
+  cpu = ([string]$cpu.Name).Trim(); cores = [int]$cpu.NumberOfCores; threads = [int]$cpu.NumberOfLogicalProcessors
+  mhz = [int]$cpu.MaxClockSpeed; ram = [int64]$cs.TotalPhysicalMemory
+  os = [string]$os.Caption; build = [string]$os.BuildNumber; boot = $os.LastBootUpTime.ToString('o')
+  maker = [string]$cs.Manufacturer; model = [string]$cs.Model; gpus = $gpus
+} | ConvertTo-Json -Compress -Depth 4
+""";
+
+  @override
+  Future<SystemInfo?> systemInfo() async {
+    final out = await _ps(_systemScript);
+    try {
+      final e = jsonDecode(out);
+      if (e is! Map<String, dynamic>) return null;
+      final gpus = <GpuInfo>[];
+      final rawGpus = e['gpus'];
+      if (rawGpus is List) {
+        for (final g in rawGpus.whereType<Map<String, dynamic>>()) {
+          gpus.add(GpuInfo(name: g['name'] as String? ?? '', memoryBytes: (g['ram'] as num?)?.toInt() ?? 0));
+        }
+      }
+      return SystemInfo(
+        cpuName: e['cpu'] as String? ?? '',
+        cores: (e['cores'] as num?)?.toInt() ?? 0,
+        threads: (e['threads'] as num?)?.toInt() ?? 0,
+        maxMhz: (e['mhz'] as num?)?.toInt() ?? 0,
+        totalRam: (e['ram'] as num?)?.toInt() ?? 0,
+        osName: (e['os'] as String? ?? '').replaceFirst('Microsoft ', ''),
+        osBuild: e['build'] as String? ?? '',
+        bootTime: DateTime.tryParse(e['boot'] as String? ?? '')?.toLocal(),
+        manufacturer: e['maker'] as String? ?? '',
+        model: e['model'] as String? ?? '',
+        gpus: gpus,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // Tek bir arka plan PowerShell süreci her 1,5 saniyede bir satır JSON yazar.
+  // Sınıf adları WMI'dandır: Türkçe dahil her dilde aynıdır.
+  // Uygulama kapanırsa (HC_PARENT süreci yoksa) kendini sonlandırır.
+  static const _liveScript = r"""
+$ErrorActionPreference = 'SilentlyContinue'
+$parent = [int]$env:HC_PARENT
+$i = 0
+while ($true) {
+  if (-not (Get-Process -Id $parent -ErrorAction SilentlyContinue)) { exit }
+  $p = Get-CimInstance Win32_PerfFormattedData_Counters_ProcessorInformation -Filter "Name='_Total'"
+  $m = Get-CimInstance Win32_PerfFormattedData_PerfOS_Memory
+  $d = Get-CimInstance Win32_PerfFormattedData_PerfDisk_PhysicalDisk -Filter "Name='_Total'"
+  $n = @(Get-CimInstance Win32_PerfFormattedData_Tcpip_NetworkInterface)
+  $g = @(Get-CimInstance Win32_PerfFormattedData_GPUPerformanceCounters_GPUEngine | Where-Object { $_.Name -like '*engtype_3D' })
+  $t = @(Get-CimInstance Win32_PerfFormattedData_Counters_ThermalZoneInformation)
+  $util = if ($p.PercentProcessorUtility -ne $null) { [double]$p.PercentProcessorUtility } else { [double]$p.PercentProcessorTime }
+  $mhz = 0
+  if ($p.ProcessorFrequency) { $mhz = [int]([double]$p.ProcessorFrequency * [double]$p.PercentProcessorPerformance / 100) }
+  $gpu = $null
+  if ($g.Count -gt 0) { $gpu = [double](($g | Measure-Object -Property UtilizationPercentage -Sum).Sum) }
+  $temp = $null
+  foreach ($z in $t) {
+    $k = if ($z.HighPrecisionTemperature) { [double]$z.HighPrecisionTemperature / 10 } else { [double]$z.Temperature }
+    $c = $k - 273.15
+    if ($c -gt 5 -and $c -lt 125 -and ($temp -eq $null -or $c -gt $temp)) { $temp = [math]::Round($c, 1) }
+  }
+  $top = $null
+  if ($i % 3 -eq 0) {
+    $top = @(Get-Process | Group-Object ProcessName | ForEach-Object {
+      [pscustomobject]@{ n = $_.Name; b = [int64](($_.Group | Measure-Object WorkingSet64 -Sum).Sum); c = $_.Count }
+    } | Sort-Object b -Descending | Select-Object -First 6)
+  }
+  $o = [ordered]@{
+    cpu = $util; mhz = $mhz; avail = [int64]$m.AvailableBytes; gpu = $gpu
+    dr = [int64]$d.DiskReadBytesPersec; dw = [int64]$d.DiskWriteBytesPersec
+    nd = [int64](($n | Measure-Object -Property BytesReceivedPersec -Sum).Sum)
+    nu = [int64](($n | Measure-Object -Property BytesSentPersec -Sum).Sum)
+    temp = $temp; top = $top
+  }
+  [Console]::Out.WriteLine((ConvertTo-Json -InputObject $o -Compress -Depth 4))
+  [Console]::Out.Flush()
+  $i++
+  Start-Sleep -Milliseconds 1500
+}
+""";
+
+  @override
+  Stream<LiveStats> liveStats() {
+    Process? process;
+    StreamSubscription<String>? lines;
+    var cancelled = false;
+    var lastTop = const <ProcessMemory>[];
+    late final StreamController<LiveStats> controller;
+    controller = StreamController<LiveStats>(
+      onListen: () async {
+        try {
+          final p = await Process.start(
+            'powershell',
+            ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', _encode(_liveScript)],
+            environment: {'HC_PARENT': '$pid'},
+          );
+          if (cancelled) {
+            p.kill();
+            return;
+          }
+          process = p;
+          lines = p.stdout.transform(utf8.decoder).transform(const LineSplitter()).listen((line) {
+            final stats = _parseLive(line, lastTop);
+            if (stats != null && !controller.isClosed) {
+              lastTop = stats.topMemory;
+              controller.add(stats);
+            }
+          });
+        } catch (e) {
+          if (!controller.isClosed) controller.addError(e);
+        }
+      },
+      onCancel: () async {
+        cancelled = true;
+        await lines?.cancel();
+        process?.kill();
+      },
+    );
+    return controller.stream;
+  }
+
+  static LiveStats? _parseLive(String line, List<ProcessMemory> previousTop) {
+    try {
+      final e = jsonDecode(line);
+      if (e is! Map<String, dynamic>) return null;
+      double d(String k) => (e[k] as num?)?.toDouble() ?? 0;
+      int i(String k) => (e[k] as num?)?.toInt() ?? 0;
+      var top = previousTop;
+      final rawTop = e['top'];
+      if (rawTop is List) {
+        top = [
+          for (final t in rawTop.whereType<Map<String, dynamic>>())
+            ProcessMemory(
+              name: t['n'] as String? ?? '',
+              bytes: (t['b'] as num?)?.toInt() ?? 0,
+              count: (t['c'] as num?)?.toInt() ?? 1,
+            ),
+        ];
+      }
+      final gpu = e['gpu'] as num?;
+      final temp = e['temp'] as num?;
+      return LiveStats(
+        cpuPercent: d('cpu').clamp(0.0, 100.0),
+        cpuMhz: i('mhz'),
+        ramAvailable: i('avail'),
+        gpuPercent: gpu?.toDouble().clamp(0.0, 100.0),
+        diskRead: i('dr'),
+        diskWrite: i('dw'),
+        netDown: i('nd'),
+        netUp: i('nu'),
+        temperature: temp?.toDouble(),
+        topMemory: top,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
 }
