@@ -1,11 +1,15 @@
 # Her gönderimde kodu GitHub'ın Linux makinesinde analiz eder ve testleri çalıştırır.
-# Derleme hataları kullanıcıya ulaşmadan burada yakalanır.
+# Derleme hataları kullanıcıya ulaşmadan burada yakalanır. Sonuçlar "ci-report" dalına
+# düz metin olarak yazılır (analyze.txt, test.txt, status.txt).
 name: Kontrol
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 concurrency:
   group: kontrol-${{ github.ref }}
@@ -20,9 +24,32 @@ jobs:
         with:
           channel: stable
           cache: true
-      - run: flutter --version
       - run: flutter pub get
       - name: Analiz
-        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+        id: analyze
+        continue-on-error: true
+        shell: bash
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings 2>&1 | tee analyze.txt; exit ${PIPESTATUS[0]}
       - name: Testler
-        run: flutter test
+        id: test
+        continue-on-error: true
+        shell: bash
+        run: flutter test 2>&1 | tee test.txt; exit ${PIPESTATUS[0]}
+      - name: Raporu ci-report dalına yaz
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p /tmp/report
+          cp analyze.txt test.txt /tmp/report/ 2>/dev/null || true
+          flutter --version > /tmp/report/flutter.txt 2>&1 || true
+          echo "${{ github.sha }}" > /tmp/report/commit.txt
+          echo "analyze=${{ steps.analyze.outcome }} test=${{ steps.test.outcome }}" > /tmp/report/status.txt
+          cd /tmp/report
+          git init -q
+          git checkout -q -b ci-report
+          git add -A
+          git -c user.name=ci -c user.email=ci@localhost commit -q -m "Rapor ${{ github.sha }}"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ci-report
+      - name: Sonuç
+        if: steps.analyze.outcome == 'failure' || steps.test.outcome == 'failure'
+        run: exit 1
