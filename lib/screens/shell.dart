@@ -89,7 +89,10 @@ class Sidebar extends StatelessWidget {
         padding: EdgeInsets.fromLTRB(10, 0, 10, 8),
         child: Row(
           children: [
-            Icon(Icons.auto_awesome, color: AppColors.brand, size: 24),
+            ClipRRect(
+              borderRadius: BorderRadius.all(Radius.circular(7)),
+              child: Image(image: AssetImage('assets/icon/app_logo.png'), width: 28, height: 28),
+            ),
             SizedBox(width: 10),
             Expanded(
               child: Text(
