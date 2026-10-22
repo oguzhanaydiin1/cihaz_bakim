@@ -1,0 +1,89 @@
+# Windows kurulum dosyası (HarrierCleaner-Setup-<sürüm>.exe).
+#  - "v0.1.0" gibi bir etiket gönderilince: derler, kurulum dosyasını üretir ve Releases'e koyar.
+#  - Elle başlatılınca (Actions > Windows kurulum dosyası > Run workflow): yalnızca derler;
+#    kurulum dosyası çalıştırmanın "Artifacts" bölümünden indirilebilir.
+# Her iki durumda dosyanın SHA-256 özeti ve boyutu "release-info" dalına yazılır
+# (oalabs.dev/harrier/latest.json bu bilgilerle güncellenir).
+name: Windows kurulum dosyası
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Sürümü denetle
+        id: v
+        shell: bash
+        run: |
+          V=$(grep '^version:' pubspec.yaml | sed 's/version: *//; s/+.*//' | tr -d '\r')
+          A=$(grep "static const version" lib/core/app_info.dart | sed "s/.*'\(.*\)'.*/\1/" | tr -d '\r')
+          if [ "$V" != "$A" ]; then echo "::error::pubspec.yaml ($V) ile AppInfo.version ($A) farklı"; exit 1; fi
+          if [ "$GITHUB_REF_TYPE" = "tag" ] && [ "$GITHUB_REF_NAME" != "v$V" ]; then
+            echo "::error::Etiket $GITHUB_REF_NAME ama sürüm $V"; exit 1
+          fi
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+
+      - run: flutter pub get
+      - run: flutter build windows --release
+
+      - name: Visual C++ çalışma zamanı dosyalarını ekle
+        shell: pwsh
+        run: |
+          foreach ($f in 'msvcp140.dll', 'vcruntime140.dll', 'vcruntime140_1.dll') {
+            Copy-Item "C:\Windows\System32\$f" build\windows\x64\runner\Release\
+          }
+
+      - name: Kurulum dosyasını üret (Inno Setup)
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress | Out-Null }
+          & $iscc "/DMyAppVersion=${{ steps.v.outputs.version }}" installer\harrier.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Özet ve boyut
+        id: sum
+        shell: bash
+        run: |
+          F="dist/HarrierCleaner-Setup-${{ steps.v.outputs.version }}.exe"
+          echo "file=$(basename "$F")" >> "$GITHUB_OUTPUT"
+          echo "sha256=$(sha256sum "$F" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+          echo "size=$(stat -c %s "$F")" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: HarrierCleaner-Setup-${{ steps.v.outputs.version }}
+          path: dist/HarrierCleaner-Setup-*.exe
+
+      - name: Releases sayfasına koy
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Harrier Cleaner ${{ steps.v.outputs.version }}
+          body_path: release-notes.md
+          files: dist/HarrierCleaner-Setup-*.exe
+
+      - name: Bilgiyi release-info dalına yaz
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p /tmp/info && cd /tmp/info
+          cat > info.json <<JSON
+          {"version": "${{ steps.v.outputs.version }}", "file": "${{ steps.sum.outputs.file }}", "sha256": "${{ steps.sum.outputs.sha256 }}", "size": ${{ steps.sum.outputs.size || 0 }}, "ref": "${GITHUB_REF_NAME}", "commit": "${GITHUB_SHA}", "outcome": "${{ job.status }}", "run": "${GITHUB_RUN_ID}"}
+          JSON
+          git init -q && git checkout -q -b release-info && git add -A
+          git -c user.name=ci -c user.email=ci@localhost commit -q -m "Sürüm bilgisi ${{ steps.v.outputs.version }}"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" release-info
