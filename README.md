@@ -9,6 +9,10 @@ Windows ve Android için tek kod tabanlı Flutter uygulaması. Bu ilk sürümde 
 | Kopya Dosyalar | Gerçek (içerik özetiyle karşılaştırma, silinenler Geri Dönüşüm Kutusu'na gider) | Örnek veri |
 | Disk Haritası | Gerçek (klasör seçilebilir, klasörlerin içine inilebilir) | Örnek veri |
 | Başlangıç Programları | Gerçek (Görev Yöneticisi ile aynı kaynaklar, açma/kapama) | Yok |
+| Uygulama Kaldırıcı | Gerçek (programın kendi kaldırıcısı + kalan klasörü Geri Dönüşüm Kutusu'na taşıma) | Örnek veri |
+| Medya Küçültücü | Gerçek (JPEG fotoğraflar; orijinaller Geri Dönüşüm Kutusu'na yedeklenir) | Örnek veri |
+| Pil ve Sağlık | Gerçek (pil kapasitesi ve döngü, disk sağlık durumu) | Örnek veri |
+| Konum Bilgisi Temizleyici | Gerçek (EXIF/XMP konum kaydını kayıpsız siler) | Örnek veri |
 | Ayarlar | Kalıcı geçmiş, hariç klasörler, en küçük dosya boyutu, yönetici olarak yeniden başlatma | Bellekte |
 
 Tüm uzun taramalar canlı dosya sayacı gösterir ve iptal edilebilir.

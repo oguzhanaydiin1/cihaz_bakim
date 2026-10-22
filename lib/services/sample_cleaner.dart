@@ -151,4 +151,91 @@ class SampleCleaner implements CleanerService {
 
   @override
   Future<void> revealInExplorer(String path) async {}
+
+  // ---- Uygulama kaldırıcı ----
+
+  final _uninstalled = <String>{};
+
+  @override
+  Future<List<InstalledApp>> installedApps() async {
+    await Future<void>.delayed(const Duration(milliseconds: 400));
+    final now = DateTime.now();
+    final all = [
+      InstalledApp(name: 'Oyun Merkezi', uninstallCommand: '-', registryKey: 'a', publisher: 'Örnek Yayıncı', version: '3.2', installDate: now.subtract(const Duration(days: 420)), sizeBytes: 1800 * _mb),
+      InstalledApp(name: 'Fotoğraf Düzenleyici', uninstallCommand: '-', registryKey: 'b', publisher: 'Örnek Stüdyo', version: '12.0', installDate: now.subtract(const Duration(days: 90)), sizeBytes: 640 * _mb),
+      InstalledApp(name: 'Not Defteri Pro', uninstallCommand: '-', registryKey: 'c', publisher: 'Örnek Yazılım', version: '1.4', installDate: now.subtract(const Duration(days: 12)), sizeBytes: 45 * _mb),
+    ];
+    return all.where((a) => !_uninstalled.contains(a.registryKey)).toList();
+  }
+
+  @override
+  Future<String?> runUninstaller(InstalledApp app) async {
+    await Future<void>.delayed(const Duration(milliseconds: 600));
+    _uninstalled.add(app.registryKey);
+    return null;
+  }
+
+  @override
+  bool isSafeLeftover(String path) => false;
+
+  @override
+  Future<bool> recycleFolder(String path) async => false;
+
+  // ---- Pil ve sağlık ----
+
+  @override
+  Future<BatteryInfo?> batteryInfo() async => const BatteryInfo(
+        name: 'Örnek pil',
+        designCapacity: 4500,
+        fullChargeCapacity: 3870,
+        cycleCount: 312,
+        chemistry: 'Li-ion',
+      );
+
+  @override
+  Future<List<DiskHealth>> diskHealth() async => const [
+        DiskHealth(name: 'Dahili depolama', mediaType: 'SSD', busType: 'UFS', status: 'Healthy', sizeBytes: 128 * _gb),
+      ];
+
+  @override
+  Future<void> openBatteryReport() async {}
+
+  // ---- Fotoğraflar ----
+
+  @override
+  String defaultPicturesFolder() => '/storage/emulated/0/DCIM';
+
+  @override
+  Future<List<PhotoFile>?> findPhotos(String root, {int minSize = 1024 * 1024, ProgressReporter? onProgress, CancelToken? token}) async {
+    if (!await _simulate('Fotoğraflar aranıyor', onProgress, token)) return null;
+    return [
+      for (var i = 0; i < 6; i++) PhotoFile(path: 'DCIM/Camera/IMG_2024${1001 + i}.jpg', sizeBytes: (8 - i) * _mb),
+    ];
+  }
+
+  @override
+  Future<CompressResult?> compressPhotos(
+    List<String> paths,
+    CompressOptions options, {
+    ProgressReporter? onProgress,
+    CancelToken? token,
+  }) async {
+    if (!await _simulate('Küçültülüyor', onProgress, token)) return null;
+    return CompressResult(compressed: paths.length, skipped: 0, failed: 0, savedBytes: paths.length * 3 * _mb, donePaths: paths);
+  }
+
+  @override
+  Future<List<GpsPhoto>?> findLocationPhotos(String root, {ProgressReporter? onProgress, CancelToken? token}) async {
+    if (!await _simulate('Fotoğraflar inceleniyor', onProgress, token)) return null;
+    return [
+      GpsPhoto(path: 'DCIM/Camera/IMG_20240812.jpg', latitude: 41.0151, longitude: 28.9795),
+      GpsPhoto(path: 'DCIM/Camera/IMG_20240901.jpg', latitude: 38.4237, longitude: 27.1428),
+    ];
+  }
+
+  @override
+  Future<(int, int)> removeLocation(List<String> paths, {ProgressReporter? onProgress}) async {
+    await _simulate('Konum siliniyor', onProgress, null);
+    return (paths.length, 0);
+  }
 }

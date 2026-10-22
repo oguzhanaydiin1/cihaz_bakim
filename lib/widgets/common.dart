@@ -4,6 +4,7 @@ import '../core/format.dart';
 import '../core/theme.dart';
 import '../models/models.dart';
 import '../state/app_state.dart';
+import 'folder_picker.dart';
 
 bool isNarrow(BuildContext context) => MediaQuery.sizeOf(context).width < 860;
 
@@ -347,4 +348,36 @@ Future<bool> confirm(BuildContext context, {required String title, required Stri
     ),
   );
   return ok ?? false;
+}
+
+/// Seçili klasörü gösterir ve "Klasör seç" butonu sunar.
+class FolderBar extends StatelessWidget {
+  const FolderBar({super.key, required this.path, required this.onChanged, this.enabled = true, this.title = 'Klasör seçin'});
+
+  final String path;
+  final ValueChanged<String> onChanged;
+  final bool enabled;
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 12,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        OutlinedButton.icon(
+          onPressed: enabled
+              ? () async {
+                  final p = await pickFolder(title, initialDirectory: path);
+                  if (p != null) onChanged(p);
+                }
+              : null,
+          icon: const Icon(Icons.folder_open_outlined, size: 18),
+          label: const Text('Klasör seç'),
+        ),
+        Text(path, style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.text)),
+      ],
+    );
+  }
 }

@@ -234,3 +234,167 @@ class AppSettings {
         history: (j['history'] as List?)?.whereType<Map<String, dynamic>>().map(HistoryEntry.fromJson).toList(),
       );
 }
+
+// ---------------------------------------------------------------------------
+// Uygulama kaldırıcı
+// ---------------------------------------------------------------------------
+
+class InstalledApp {
+  InstalledApp({
+    required this.name,
+    required this.uninstallCommand,
+    required this.registryKey,
+    this.publisher = '',
+    this.version = '',
+    this.installDate,
+    this.sizeBytes = 0,
+    this.installLocation = '',
+    this.machineWide = false,
+  });
+
+  final String name;
+  final String uninstallCommand;
+
+  /// Kayıt defterindeki anahtarı; kaldırıldı mı diye kontrol için kullanılır.
+  final String registryKey;
+  final String publisher;
+  final String version;
+  final DateTime? installDate;
+
+  /// Programın bildirdiği boyut (0 = bilinmiyor).
+  final int sizeBytes;
+  final String installLocation;
+
+  /// Tüm kullanıcılar için kurulu (kaldırırken Windows izin isteyebilir).
+  final bool machineWide;
+}
+
+/// Kaldırma sonucu.
+class UninstallOutcome {
+  const UninstallOutcome({required this.removed, this.leftoverFolder, this.error});
+
+  /// Program artık listede yok.
+  final bool removed;
+
+  /// Kaldırıldıktan sonra yerinde kalan kurulum klasörü.
+  final String? leftoverFolder;
+  final String? error;
+}
+
+// ---------------------------------------------------------------------------
+// Pil ve sağlık
+// ---------------------------------------------------------------------------
+
+class BatteryInfo {
+  const BatteryInfo({
+    required this.name,
+    required this.designCapacity,
+    required this.fullChargeCapacity,
+    this.cycleCount,
+    this.chemistry = '',
+  });
+
+  final String name;
+
+  /// mWh
+  final int designCapacity;
+
+  /// mWh
+  final int fullChargeCapacity;
+  final int? cycleCount;
+  final String chemistry;
+
+  /// Pilin ilk günkü kapasitesine göre bugünkü oranı (0-1).
+  double get health => designCapacity <= 0 ? 0 : (fullChargeCapacity / designCapacity).clamp(0.0, 1.2);
+}
+
+class DiskHealth {
+  const DiskHealth({
+    required this.name,
+    required this.mediaType,
+    required this.busType,
+    required this.status,
+    required this.sizeBytes,
+    this.temperature,
+    this.wear,
+    this.powerOnHours,
+  });
+
+  final String name;
+
+  /// SSD, HDD veya boş.
+  final String mediaType;
+  final String busType;
+
+  /// Healthy, Warning, Unhealthy...
+  final String status;
+  final int sizeBytes;
+  final int? temperature;
+
+  /// SSD yıpranma yüzdesi (0 = yeni).
+  final int? wear;
+  final int? powerOnHours;
+}
+
+// ---------------------------------------------------------------------------
+// Medya küçültücü
+// ---------------------------------------------------------------------------
+
+class PhotoFile {
+  PhotoFile({required this.path, required this.sizeBytes, this.selected = true});
+  final String path;
+  final int sizeBytes;
+  bool selected;
+}
+
+class CompressOptions {
+  const CompressOptions({this.quality = 85, this.maxDimension = 0, this.backup = true});
+
+  /// JPEG kalitesi (1-100).
+  final int quality;
+
+  /// Uzun kenar sınırı; 0 = boyut değişmez.
+  final int maxDimension;
+
+  /// Orijinaller Geri Dönüşüm Kutusu'na taşınsın mı?
+  final bool backup;
+}
+
+class CompressResult {
+  const CompressResult({
+    required this.compressed,
+    required this.skipped,
+    required this.failed,
+    required this.savedBytes,
+    required this.donePaths,
+  });
+
+  final int compressed;
+
+  /// Zaten küçük olduğu için dokunulmayanlar.
+  final int skipped;
+  final int failed;
+  final int savedBytes;
+
+  /// Küçültülen dosyalar (listeden çıkarmak için).
+  final List<String> donePaths;
+}
+
+// ---------------------------------------------------------------------------
+// Konum bilgisi temizleyici
+// ---------------------------------------------------------------------------
+
+class GpsPhoto {
+  GpsPhoto({required this.path, this.latitude, this.longitude, this.selected = true});
+  final String path;
+  final double? latitude;
+  final double? longitude;
+  bool selected;
+
+  String get coordinates {
+    final lat = latitude;
+    final lon = longitude;
+    if (lat == null || lon == null) return 'Konum kaydı var';
+    return '${lat.toStringAsFixed(4)}, ${lon.toStringAsFixed(4)}';
+  }
+}

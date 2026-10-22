@@ -5,10 +5,14 @@ import '../core/platform.dart';
 import '../core/theme.dart';
 import '../state/app_state.dart';
 import '../widgets/common.dart';
+import 'apps_screen.dart';
 import 'coming_soon_screen.dart';
 import 'disk_map_screen.dart';
 import 'duplicates_screen.dart';
+import 'health_screen.dart';
 import 'junk_screen.dart';
+import 'location_screen.dart';
+import 'media_screen.dart';
 import 'settings_screen.dart';
 import 'smart_scan_screen.dart';
 import 'startup_screen.dart';
@@ -31,6 +35,14 @@ class Shell extends StatelessWidget {
         return const StartupScreen();
       case ModuleId.settings:
         return const SettingsScreen();
+      case ModuleId.apps:
+        return const AppsScreen();
+      case ModuleId.health:
+        return const HealthScreen();
+      case ModuleId.media:
+        return const MediaScreen();
+      case ModuleId.metadata:
+        return const LocationScreen();
       default:
         return ComingSoonScreen(module: moduleById(id));
     }

@@ -6,6 +6,7 @@ import '../models/models.dart';
 import 'cleaner_service.dart';
 import 'fs_utils.dart';
 import 'isolate_runner.dart';
+import 'media_utils.dart';
 
 /// Windows için gerçek tarama ve temizleme.
 class WindowsCleaner implements CleanerService {
@@ -42,7 +43,7 @@ class WindowsCleaner implements CleanerService {
   // ---- PowerShell yardımcıları ----
 
   /// Betiği -EncodedCommand ile çalıştırır: tırnak ve satır sonu kaçışı derdi olmaz.
-  Future<String> _ps(String script) async {
+  Future<String> _ps(String script, {Map<String, String>? env}) async {
     final full = '[Console]::OutputEncoding = New-Object System.Text.UTF8Encoding \$false\n$script';
     final units = full.codeUnits;
     final bytes = Uint8List(units.length * 2);
@@ -55,6 +56,7 @@ class WindowsCleaner implements CleanerService {
         'powershell',
         ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', base64Encode(bytes)],
         stdoutEncoding: utf8,
+        environment: env,
       );
       return (r.stdout as String).replaceAll('﻿', '').trim();
     } catch (_) {
@@ -425,4 +427,294 @@ ConvertTo-Json -InputObject @($out) -Compress -Depth 3
   Future<void> revealInExplorer(String path) async {
     await _ps("Start-Process explorer.exe -ArgumentList ('/select,\"' + ${_q(path)} + '\"')");
   }
+
+  // ---- Uygulama kaldırıcı ----
+
+  static const _appsScript = r"""
+$out = New-Object System.Collections.ArrayList
+$keys = @(
+  @{ p = 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall'; m = $true },
+  @{ p = 'HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall'; m = $true },
+  @{ p = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall'; m = $false }
+)
+foreach ($k in $keys) {
+  if (-not (Test-Path -LiteralPath $k.p)) { continue }
+  foreach ($s in Get-ChildItem -LiteralPath $k.p -ErrorAction SilentlyContinue) {
+    $v = Get-ItemProperty -LiteralPath $s.PSPath -ErrorAction SilentlyContinue
+    if (-not $v) { continue }
+    $name = [string]$v.DisplayName
+    $un = [string]$v.UninstallString
+    if (-not $name -or -not $un) { continue }
+    if ($v.SystemComponent -eq 1) { continue }
+    if ($v.ParentKeyName) { continue }
+    if ([string]$v.ReleaseType -match 'Update|Hotfix') { continue }
+    [void]$out.Add([pscustomobject]@{
+      name = $name; publisher = [string]$v.Publisher; version = [string]$v.DisplayVersion
+      date = [string]$v.InstallDate; size = [int64]$v.EstimatedSize; uninstall = $un
+      location = [string]$v.InstallLocation; key = [string]$s.Name; machine = $k.m
+    })
+  }
+}
+ConvertTo-Json -InputObject @($out) -Compress -Depth 3
+""";
+
+  @override
+  Future<List<InstalledApp>> installedApps() async {
+    final out = await _ps(_appsScript);
+    try {
+      final data = jsonDecode(out);
+      if (data is! List) return [];
+      final seen = <String>{};
+      final apps = <InstalledApp>[];
+      for (final e in data.whereType<Map<String, dynamic>>()) {
+        final name = (e['name'] as String? ?? '').trim();
+        final version = e['version'] as String? ?? '';
+        if (name.isEmpty || !seen.add('${name.toLowerCase()}|$version')) continue; // 32/64 bit kopyaları
+        final date = e['date'] as String? ?? '';
+        DateTime? installed;
+        if (RegExp(r'^\d{8}$').hasMatch(date)) {
+          installed = DateTime.tryParse('${date.substring(0, 4)}-${date.substring(4, 6)}-${date.substring(6, 8)}');
+        }
+        apps.add(InstalledApp(
+          name: name,
+          uninstallCommand: e['uninstall'] as String? ?? '',
+          registryKey: e['key'] as String? ?? '',
+          publisher: e['publisher'] as String? ?? '',
+          version: version,
+          installDate: installed,
+          sizeBytes: ((e['size'] as num?)?.toInt() ?? 0) * 1024, // KB → bayt
+          installLocation: (e['location'] as String? ?? '').trim().replaceAll('"', ''),
+          machineWide: e['machine'] == true,
+        ));
+      }
+      apps.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+      return apps;
+    } catch (_) {
+      return [];
+    }
+  }
+
+  /// Kaldırma komutunu çalıştırılabilir dosya ve parametrelere ayırır.
+  static (String, String) _splitCommand(String command) {
+    final c = command.trim();
+    if (c.startsWith('"')) {
+      final end = c.indexOf('"', 1);
+      if (end > 1) return (c.substring(1, end), c.substring(end + 1).trim());
+    }
+    final m = RegExp(r'^(.+?\.exe)(\s+.*)?$', caseSensitive: false).firstMatch(c);
+    if (m != null) return (m.group(1)!, (m.group(2) ?? '').trim());
+    final space = c.indexOf(' ');
+    return space < 0 ? (c, '') : (c.substring(0, space), c.substring(space + 1).trim());
+  }
+
+  @override
+  Future<String?> runUninstaller(InstalledApp app) async {
+    var (file, args) = _splitCommand(app.uninstallCommand);
+    // "%ProgramFiles%" gibi ortam değişkenlerini aç.
+    file = file.replaceAllMapped(RegExp(r'%([^%]+)%'), (m) => _env[m[1]!] ?? m[0]!);
+    if (file.isEmpty) return 'Bu programın kaldırma komutu bulunamadı.';
+    // MSI programlarında "/I" değiştir/onar demek; kaldırmak için "/X" olmalı.
+    if (file.toLowerCase().contains('msiexec')) {
+      args = args.replaceAllMapped(RegExp(r'/I\s*\{', caseSensitive: false), (_) => '/X{');
+    }
+    final out = await _ps(
+      r'try { $a = @{ FilePath = $env:HC_FILE; Wait = $true; ErrorAction = "Stop" }; '
+      r'if ($env:HC_ARGS) { $a.ArgumentList = $env:HC_ARGS }; Start-Process @a; "ok" } catch { "iptal" }',
+      env: {'HC_FILE': file, 'HC_ARGS': args},
+    );
+    return out == 'ok' ? null : 'Kaldırıcı başlatılamadı ya da izin penceresinde vazgeçildi.';
+  }
+
+  String _norm(String p) => p.trim().replaceAll(RegExp(r'[\\/]+$'), '').toLowerCase();
+
+  @override
+  bool isSafeLeftover(String path) {
+    if (!isSafeRoot(path)) return false;
+    final p = _norm(path);
+    final pf = _env['ProgramFiles'] ?? '';
+    final pf86 = _env['ProgramFiles(x86)'] ?? '';
+    final pd = _env['ProgramData'] ?? '';
+    final protected = <String>{
+      _winDir, pf, pf86, pd, _user, _local, _roaming,
+      _join(_local, 'Programs'), _join(_local, 'Microsoft'), _join(_roaming, 'Microsoft'),
+      _join(pf, 'Common Files'), _join(pf86, 'Common Files'), _join(pf, 'WindowsApps'),
+      _join(_user, 'Desktop'), _join(_user, 'Documents'), _join(_user, 'Downloads'),
+      '$_systemDrive\\Users',
+    }.where((x) => x.isNotEmpty).map(_norm).toSet();
+    if (protected.contains(p)) return false;
+    if (p.startsWith('${_norm(_winDir)}\\') || p.contains('\\windowsapps')) return false;
+    // Yalnızca program klasörlerinin ALTINDAKİ bir klasör silinebilir.
+    final parents = [pf, pf86, pd, _local, _roaming].where((x) => x.isNotEmpty).map(_norm);
+    return parents.any((a) => p.startsWith('$a\\'));
+  }
+
+  @override
+  Future<bool> recycleFolder(String path) async {
+    if (!isSafeLeftover(path)) return false;
+    final out = await _ps(
+      r'try { Add-Type -AssemblyName Microsoft.VisualBasic; '
+      r'[Microsoft.VisualBasic.FileIO.FileSystem]::DeleteDirectory($env:HC_FILE, "OnlyErrorDialogs", "SendToRecycleBin"); "ok" } '
+      r'catch { "hata" }',
+      env: {'HC_FILE': path},
+    );
+    return out == 'ok';
+  }
+
+  // ---- Pil ve sağlık ----
+
+  @override
+  Future<BatteryInfo?> batteryInfo() async {
+    final path = _join(Directory.systemTemp.path, 'harrier_battery.xml');
+    try {
+      await Process.run('powercfg', ['/batteryreport', '/xml', '/output', path]);
+      final file = File(path);
+      if (!await file.exists()) return null;
+      final bytes = await file.readAsBytes();
+      try {
+        await file.delete();
+      } catch (_) {}
+      String text;
+      if (bytes.length >= 2 && bytes[0] == 0xFF && bytes[1] == 0xFE) {
+        text = String.fromCharCodes(Uint16List.view(bytes.buffer, bytes.offsetInBytes + 2, (bytes.length - 2) ~/ 2));
+      } else {
+        text = utf8.decode(bytes, allowMalformed: true);
+      }
+      final m = RegExp(r'<Battery>(.*?)</Battery>', dotAll: true).firstMatch(text);
+      if (m == null) return null;
+      final block = m.group(1)!;
+      String tag(String name) => RegExp('<$name>(.*?)</$name>', dotAll: true).firstMatch(block)?.group(1)?.trim() ?? '';
+      final design = int.tryParse(tag('DesignCapacity')) ?? 0;
+      final full = int.tryParse(tag('FullChargeCapacity')) ?? 0;
+      if (design <= 0 && full <= 0) return null;
+      final id = tag('Id');
+      return BatteryInfo(
+        name: id.isNotEmpty ? id : tag('Manufacturer'),
+        designCapacity: design,
+        fullChargeCapacity: full,
+        cycleCount: int.tryParse(tag('CycleCount')),
+        chemistry: tag('Chemistry'),
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static const _diskScript = r"""
+$out = New-Object System.Collections.ArrayList
+foreach ($d in Get-PhysicalDisk) {
+  $r = $null
+  try { $r = $d | Get-StorageReliabilityCounter -ErrorAction Stop } catch {}
+  [void]$out.Add([pscustomobject]@{
+    name = [string]$d.FriendlyName; media = [string]$d.MediaType; bus = [string]$d.BusType
+    health = [string]$d.HealthStatus; size = [int64]$d.Size
+    temp = $(if ($r -and $r.Temperature) { [int]$r.Temperature } else { $null })
+    wear = $(if ($r -and $r.Wear -ne $null) { [int]$r.Wear } else { $null })
+    hours = $(if ($r -and $r.PowerOnHours) { [int]$r.PowerOnHours } else { $null })
+  })
+}
+ConvertTo-Json -InputObject @($out) -Compress -Depth 3
+""";
+
+  @override
+  Future<List<DiskHealth>> diskHealth() async {
+    final out = await _ps(_diskScript);
+    try {
+      final data = jsonDecode(out);
+      if (data is! List) return [];
+      return [
+        for (final e in data.whereType<Map<String, dynamic>>())
+          DiskHealth(
+            name: e['name'] as String? ?? 'Disk',
+            mediaType: e['media'] as String? ?? '',
+            busType: e['bus'] as String? ?? '',
+            status: e['health'] as String? ?? '',
+            sizeBytes: (e['size'] as num?)?.toInt() ?? 0,
+            temperature: (e['temp'] as num?)?.toInt(),
+            wear: (e['wear'] as num?)?.toInt(),
+            powerOnHours: (e['hours'] as num?)?.toInt(),
+          ),
+      ];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  @override
+  Future<void> openBatteryReport() async {
+    final path = _join(Directory.systemTemp.path, 'harrier_pil_raporu.html');
+    try {
+      await Process.run('powercfg', ['/batteryreport', '/output', path]);
+      await _ps(r'Start-Process -FilePath $env:HC_FILE', env: {'HC_FILE': path});
+    } catch (_) {}
+  }
+
+  // ---- Fotoğraflar ----
+
+  @override
+  String defaultPicturesFolder() => _user.isNotEmpty ? _join(_user, 'Pictures') : defaultUsageRoot();
+
+  @override
+  Future<List<PhotoFile>?> findPhotos(String root, {int minSize = 1024 * 1024, ProgressReporter? onProgress, CancelToken? token}) =>
+      findLargePhotos(root, minSize, onProgress: onProgress, token: token);
+
+  @override
+  Future<CompressResult?> compressPhotos(
+    List<String> paths,
+    CompressOptions options, {
+    ProgressReporter? onProgress,
+    CancelToken? token,
+  }) async {
+    final r = await compressToTemp(paths, options.quality, options.maxDimension, onProgress: onProgress, token: token);
+    if (r == null) {
+      cleanupTemps(paths); // iptal: yarım kalan geçici dosyaları sil
+      return null;
+    }
+    final (items, skipped, compressFailed) = r;
+    var failed = compressFailed;
+    var saved = 0;
+    final done = <String>[];
+
+    if (options.backup && items.isNotEmpty) {
+      // Orijinalleri önce Geri Dönüşüm Kutusu'na taşı, sonra küçültülmüş halleri yerlerine koy.
+      onProgress?.call(const ScanProgress(phase: 'Orijinaller Geri Dönüşüm Kutusu’na taşınıyor'));
+      await deleteFiles([for (final it in items) it.$1]);
+    }
+    for (final (original, temp, oldSize, newSize, modifiedMs) in items) {
+      final modified = DateTime.fromMillisecondsSinceEpoch(modifiedMs);
+      var ok = false;
+      if (options.backup) {
+        if (File(original).existsSync()) {
+          // Orijinal taşınamadıysa dokunma.
+          try {
+            File(temp).deleteSync();
+          } catch (_) {}
+        } else {
+          try {
+            File(temp).renameSync(original);
+            try {
+              File(original).setLastModifiedSync(modified);
+            } catch (_) {}
+            ok = true;
+          } catch (_) {}
+        }
+      } else {
+        ok = replaceFileSafely(original, temp, modified);
+      }
+      if (ok) {
+        saved += oldSize - newSize;
+        done.add(original);
+      } else {
+        failed++;
+      }
+    }
+    return CompressResult(compressed: done.length, skipped: skipped, failed: failed, savedBytes: saved, donePaths: done);
+  }
+
+  @override
+  Future<List<GpsPhoto>?> findLocationPhotos(String root, {ProgressReporter? onProgress, CancelToken? token}) =>
+      findGpsPhotos(root, onProgress: onProgress, token: token);
+
+  @override
+  Future<(int, int)> removeLocation(List<String> paths, {ProgressReporter? onProgress}) async =>
+      await stripGpsFrom(paths, onProgress: onProgress) ?? (0, paths.length);
 }

@@ -59,4 +59,43 @@ abstract class CleanerService {
 
   /// Dosyayı Dosya Gezgini'nde seçili olarak gösterir.
   Future<void> revealInExplorer(String path);
+
+  // ---- Uygulama kaldırıcı ----
+
+  Future<List<InstalledApp>> installedApps();
+
+  /// Programın kendi kaldırıcısını başlatır ve bitmesini bekler.
+  /// Başarılıysa null, değilse hata mesajı döndürür.
+  Future<String?> runUninstaller(InstalledApp app);
+
+  /// Kaldırma sonrası kalan bir klasör güvenle silinebilir mi?
+  /// (Program Files, AppData gibi ana klasörler asla silinmez.)
+  bool isSafeLeftover(String path);
+
+  /// Klasörü Geri Dönüşüm Kutusu'na taşır.
+  Future<bool> recycleFolder(String path);
+
+  // ---- Pil ve sağlık ----
+
+  /// Pil yoksa (masaüstü bilgisayar) null.
+  Future<BatteryInfo?> batteryInfo();
+  Future<List<DiskHealth>> diskHealth();
+
+  /// Windows'un ayrıntılı pil raporunu tarayıcıda açar.
+  Future<void> openBatteryReport();
+
+  // ---- Fotoğraflar ----
+
+  String defaultPicturesFolder();
+  Future<List<PhotoFile>?> findPhotos(String root, {int minSize = 1024 * 1024, ProgressReporter? onProgress, CancelToken? token});
+  Future<CompressResult?> compressPhotos(
+    List<String> paths,
+    CompressOptions options, {
+    ProgressReporter? onProgress,
+    CancelToken? token,
+  });
+  Future<List<GpsPhoto>?> findLocationPhotos(String root, {ProgressReporter? onProgress, CancelToken? token});
+
+  /// (temizlenen, başarısız)
+  Future<(int, int)> removeLocation(List<String> paths, {ProgressReporter? onProgress});
 }

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/widgets.dart';
 
 import '../core/modules.dart';
@@ -60,7 +62,7 @@ class AppState extends ChangeNotifier {
   bool get canCancel => _token != null;
 
   /// Aynı anda yalnızca bir uzun işlem çalışır.
-  bool get anyBusy => scanning || junkBusy || dupesBusy || usageBusy;
+  bool get anyBusy => scanning || junkBusy || dupesBusy || usageBusy || photosBusy || gpsBusy;
 
   void cancel() => _token?.cancel();
 
@@ -385,6 +387,208 @@ class AppState extends ChangeNotifier {
     if (error == null) item.enabled = target;
     notifyListeners();
     return error;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Uygulama kaldırıcı
+  // ---------------------------------------------------------------------------
+
+  List<InstalledApp>? apps;
+  bool appsBusy = false;
+
+  /// Şu an kaldırılmakta olan programın anahtarı.
+  String? uninstalling;
+
+  Future<void> loadApps() async {
+    if (appsBusy) return;
+    appsBusy = true;
+    notifyListeners();
+    try {
+      apps = await service.installedApps();
+    } finally {
+      appsBusy = false;
+      notifyListeners();
+    }
+  }
+
+  Future<UninstallOutcome> uninstall(InstalledApp app) async {
+    uninstalling = app.registryKey;
+    notifyListeners();
+    try {
+      final error = await service.runUninstaller(app);
+      if (error != null) return UninstallOutcome(removed: false, error: error);
+      // Bazı kaldırıcılar işi arka planda bitirir; listeyi biraz bekleyip yenile.
+      await Future<void>.delayed(const Duration(seconds: 2));
+      final list = await service.installedApps();
+      apps = list;
+      final removed = !list.any((a) => a.registryKey == app.registryKey);
+      String? leftover;
+      final loc = app.installLocation;
+      if (removed && loc.isNotEmpty && service.isSafeLeftover(loc) && Directory(loc).existsSync()) {
+        leftover = loc;
+      }
+      if (removed) await _record('Program kaldırıldı: ${app.name}', app.sizeBytes);
+      return UninstallOutcome(removed: removed, leftoverFolder: leftover);
+    } finally {
+      uninstalling = null;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> recycleLeftover(String path) => service.recycleFolder(path);
+
+  // ---------------------------------------------------------------------------
+  // Pil ve sağlık
+  // ---------------------------------------------------------------------------
+
+  BatteryInfo? battery;
+  List<DiskHealth>? disks;
+  bool healthBusy = false;
+  bool healthLoaded = false;
+
+  Future<void> loadHealth() async {
+    if (healthBusy) return;
+    healthBusy = true;
+    notifyListeners();
+    try {
+      battery = await service.batteryInfo();
+      disks = await service.diskHealth();
+      healthLoaded = true;
+    } finally {
+      healthBusy = false;
+      notifyListeners();
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Medya küçültücü
+  // ---------------------------------------------------------------------------
+
+  late String photosRoot = service.defaultPicturesFolder();
+  List<PhotoFile>? photos;
+  bool photosBusy = false;
+  CompressOptions compressOptions = const CompressOptions();
+
+  void setCompressOptions(CompressOptions o) {
+    compressOptions = o;
+    notifyListeners();
+  }
+
+  Future<void> findPhotos([String? root]) async {
+    if (anyBusy) return;
+    if (root != null) photosRoot = root;
+    photosBusy = true;
+    final t = _begin();
+    notifyListeners();
+    try {
+      final r = await service.findPhotos(photosRoot, onProgress: _onProgress, token: t);
+      if (r != null) photos = r;
+    } finally {
+      photosBusy = false;
+      _end(t);
+      notifyListeners();
+    }
+  }
+
+  void togglePhoto(PhotoFile p) {
+    p.selected = !p.selected;
+    notifyListeners();
+  }
+
+  void selectAllPhotos(bool value) {
+    for (final p in photos ?? <PhotoFile>[]) {
+      p.selected = value;
+    }
+    notifyListeners();
+  }
+
+  List<PhotoFile> get selectedPhotos => (photos ?? []).where((p) => p.selected).toList();
+
+  Future<CompressResult?> compressSelectedPhotos() async {
+    final selected = selectedPhotos;
+    if (selected.isEmpty || anyBusy) return null;
+    photosBusy = true;
+    final t = _begin();
+    notifyListeners();
+    try {
+      final r = await service.compressPhotos(
+        [for (final p in selected) p.path],
+        compressOptions,
+        onProgress: _onProgress,
+        token: t,
+      );
+      if (r != null) {
+        final done = r.donePaths.toSet();
+        photos?.removeWhere((p) => done.contains(p.path));
+        await _record('Fotoğraflar küçültüldü (${r.compressed} adet)', r.savedBytes);
+        storage = await service.storageInfo();
+      }
+      return r;
+    } finally {
+      photosBusy = false;
+      _end(t);
+      notifyListeners();
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Konum bilgisi temizleyici
+  // ---------------------------------------------------------------------------
+
+  late String gpsRoot = service.defaultPicturesFolder();
+  List<GpsPhoto>? gpsPhotos;
+  bool gpsBusy = false;
+
+  Future<void> findGpsPhotos([String? root]) async {
+    if (anyBusy) return;
+    if (root != null) gpsRoot = root;
+    gpsBusy = true;
+    final t = _begin();
+    notifyListeners();
+    try {
+      final r = await service.findLocationPhotos(gpsRoot, onProgress: _onProgress, token: t);
+      if (r != null) gpsPhotos = r;
+    } finally {
+      gpsBusy = false;
+      _end(t);
+      notifyListeners();
+    }
+  }
+
+  void toggleGps(GpsPhoto p) {
+    p.selected = !p.selected;
+    notifyListeners();
+  }
+
+  void selectAllGps(bool value) {
+    for (final p in gpsPhotos ?? <GpsPhoto>[]) {
+      p.selected = value;
+    }
+    notifyListeners();
+  }
+
+  List<GpsPhoto> get selectedGps => (gpsPhotos ?? []).where((p) => p.selected).toList();
+
+  /// (temizlenen, başarısız)
+  Future<(int, int)> removeSelectedLocations() async {
+    final selected = selectedGps;
+    if (selected.isEmpty || anyBusy) return (0, 0);
+    gpsBusy = true;
+    final t = _begin();
+    notifyListeners();
+    try {
+      final paths = [for (final p in selected) p.path];
+      final r = await service.removeLocation(paths, onProgress: _onProgress);
+      // Başarılı olanları listeden çıkarmak için yeniden kontrol etmeye gerek yok:
+      // seçilenler işlendi; başarısız olanlar bir sonraki taramada yine görünür.
+      final done = paths.toSet();
+      gpsPhotos?.removeWhere((p) => done.contains(p.path));
+      return r;
+    } finally {
+      gpsBusy = false;
+      _end(t);
+      notifyListeners();
+    }
   }
 
   // ---------------------------------------------------------------------------
