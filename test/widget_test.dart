@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:cihaz_bakim/core/format.dart';
 import 'package:cihaz_bakim/core/i18n.dart';
 import 'package:cihaz_bakim/main.dart';
+import 'package:cihaz_bakim/services/error_reporter.dart';
 import 'package:cihaz_bakim/services/sample_cleaner.dart';
 import 'package:cihaz_bakim/services/updater.dart';
 import 'package:cihaz_bakim/state/app_state.dart';
@@ -43,5 +44,23 @@ void main() {
     expect(find.text('Smart Scan'), findsWidgets);
     expect(find.text('Akıllı Tarama'), findsNothing);
     L.apply(AppLanguage.tr);
+  });
+
+  test('hata raporundan dosya yolları ve dosya adları tamamen silinir', () {
+    final out = ErrorReporter.scrub(
+      r"FileSystemException: Cannot open file, path = 'D:\Fotoğraflar\Ailem\IMG_2041.jpg' "
+      r'(OS Error) C:/Users/ayse/Pictures/a.jpg file:///C:/x/y.dart \\nas\paylasim\belge.pdf '
+      r'%USERPROFILE%\Desktop\gizli.txt '
+      r"'D:\Aile Fotoğrafları\tatil 2024.jpg'",
+    );
+    expect(out, isNot(contains('Fotoğrafları')));
+    expect(out, isNot(contains('tatil')));
+    expect(out, isNot(contains('Ailem')));
+    expect(out, isNot(contains('IMG_2041')));
+    expect(out, isNot(contains('ayse')));
+    expect(out, isNot(contains('belge.pdf')));
+    expect(out, isNot(contains('gizli.txt')));
+    expect(out, contains('FileSystemException: Cannot open file'));
+    expect(out, contains('<yol>'));
   });
 }

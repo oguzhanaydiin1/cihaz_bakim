@@ -57,17 +57,25 @@ class ErrorReporter {
     return recent.map((e) => e.format()).join('\n\n');
   }
 
-  static String _scrub(String text) {
+  /// Rapordan kişisel bilgileri çıkarır: dosya ve klasör yollarının TAMAMI (dosya adları dahil)
+  /// "<yol>" ile, kullanıcı adı "<kullanıcı>" ile değiştirilir.
+  @visibleForTesting
+  static String scrub(String text) {
     var t = text;
-    final env = Platform.environment;
-    for (final key in ['USERPROFILE', 'LOCALAPPDATA', 'APPDATA', 'TEMP']) {
-      final v = env[key];
-      if (v != null && v.length > 3) t = t.replaceAll(v, '%$key%');
-    }
-    final user = env['USERNAME'];
+    // Tırnak içindeki yollar boşluk içerebilir ("D:\Aile Fotoğrafları\..."): önce bütün olarak gizle.
+    t = t.replaceAll(RegExp(r"'(file:/+)?[A-Za-z]:[\\/][^'\n]*'"), "'<yol>'");
+    t = t.replaceAll(RegExp(r'"(file:/+)?[A-Za-z]:[\\/][^"\n]*"'), '"<yol>"');
+    // C:\..., D:/..., file:///C:/... ve \\sunucu\paylaşım\... biçimindeki yollar
+    t = t.replaceAll(RegExp(r'''(file:/+)?[A-Za-z]:[\\/][^\s'"<>|*?]*'''), '<yol>');
+    t = t.replaceAll(RegExp(r'''\\\\[^\s'"<>|*?]+'''), '<yol>');
+    // %USERPROFILE%\... gibi ortam değişkeniyle yazılmış yollar
+    t = t.replaceAll(RegExp(r'''%[A-Za-z_]+%[\\/][^\s'"<>|*?]*'''), '<yol>');
+    final user = Platform.environment['USERNAME'];
     if (user != null && user.length > 2) t = t.replaceAll(user, '<kullanıcı>');
     return t;
   }
+
+  static String _scrub(String text) => scrub(text);
 
   static void record(Object error, StackTrace? stack) {
     final entry = ErrorEntry(
