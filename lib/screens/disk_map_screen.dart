@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../core/i18n.dart';
 import '../core/format.dart';
 import '../core/theme.dart';
 import '../models/models.dart';
@@ -30,13 +31,13 @@ class DiskMapScreen extends StatelessWidget {
           OutlinedButton.icon(
             onPressed: state.anyBusy ? null : () => _choose(state),
             icon: const Icon(Icons.folder_open_outlined, size: 18),
-            label: const Text('Klasör seç'),
+            label: Text(L.t('Klasör seç', 'Choose folder')),
           ),
           if (parent != null)
             OutlinedButton.icon(
               onPressed: state.anyBusy ? null : () => state.loadUsage(parent),
               icon: const Icon(Icons.arrow_upward, size: 18),
-              label: const Text('Üst klasör'),
+              label: Text(L.t('Üst klasör', 'Up one level')),
             ),
         ],
         Text(state.usageRoot, style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.text)),
@@ -46,18 +47,18 @@ class DiskMapScreen extends StatelessWidget {
     Widget content;
     if (state.usageBusy) {
       content = ProgressCard(
-        title: 'Klasör boyutları hesaplanıyor…',
+        title: L.t('Klasör boyutları hesaplanıyor…', 'Calculating folder sizes…'),
         progress: state.progress,
         onCancel: state.canCancel ? state.cancel : null,
       );
     } else if (usage == null) {
       content = EmptyState(
         icon: Icons.dashboard_outlined,
-        text: 'Hangi klasörlerin ne kadar yer kapladığını görmek için analizi başlatın.',
-        action: FilledButton(onPressed: state.anyBusy ? null : () => state.loadUsage(), child: const Text('Analiz Et')),
+        text: L.t('Hangi klasörlerin ne kadar yer kapladığını görmek için analizi başlatın.', 'Start the analysis to see how much space each folder takes.'),
+        action: FilledButton(onPressed: state.anyBusy ? null : () => state.loadUsage(), child: Text(L.t('Analiz Et', 'Analyze'))),
       );
     } else if (usage.isEmpty) {
-      content = const EmptyState(icon: Icons.folder_off_outlined, text: 'Bu klasör boş ya da erişilemiyor.');
+      content = EmptyState(icon: Icons.folder_off_outlined, text: L.t('Bu klasör boş ya da erişilemiyor.', 'This folder is empty or can’t be accessed.'));
     } else {
       final cells = _limit(usage);
       final total = cells.fold<int>(0, (s, u) => s + u.bytes);
@@ -88,8 +89,8 @@ class DiskMapScreen extends StatelessWidget {
     }
 
     return ModulePage(
-      title: 'Disk Haritası',
-      subtitle: 'Kutuların büyüklüğü kapladıkları alanla orantılıdır. Bir klasöre tıklayınca içine inilir.',
+      title: L.t('Disk Haritası', 'Disk Map'),
+      subtitle: L.t('Kutuların büyüklüğü kapladıkları alanla orantılıdır. Bir klasöre tıklayınca içine inilir.', 'Each box is sized by the space it takes. Click a folder to open it.'),
       children: [
         if (state.service.isSample) const SampleBanner(),
         header,
@@ -99,7 +100,7 @@ class DiskMapScreen extends StatelessWidget {
   }
 
   Future<void> _choose(AppState state) async {
-    final path = await pickFolder('İncelenecek klasörü veya sürücüyü seçin', initialDirectory: state.usageRoot);
+    final path = await pickFolder(L.t('İncelenecek klasörü veya sürücüyü seçin', 'Choose a folder or drive to analyze'), initialDirectory: state.usageRoot);
     if (path != null) await state.loadUsage(path);
   }
 
@@ -189,9 +190,9 @@ class _Cell extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(item.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
+                  Text(folderLabel(item.name), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
                   Text(
-                    '${formatBytes(item.bytes)} · %$pct',
+                    L.t('${formatBytes(item.bytes)} · %$pct', '${formatBytes(item.bytes)} · $pct%'),
                     style: const TextStyle(color: Color(0xFFE5E7EB), fontSize: 12),
                   ),
                 ],
@@ -227,7 +228,7 @@ class _UsageRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(item.name, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  Text(folderLabel(item.name), overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600)),
                   const SizedBox(height: 6),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(99),

@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import '../core/i18n.dart';
 import '../models/models.dart';
 import 'cleaner_service.dart';
 import 'isolate_runner.dart';
@@ -22,7 +23,7 @@ class SampleCleaner implements CleanerService {
   bool get supportsStartup => false;
 
   @override
-  String get deleteDestination => 'Silinecek';
+  String get deleteDestination => L.t('Silinecek', 'will be deleted');
 
   @override
   String? get settingsPath => null;
@@ -47,7 +48,7 @@ class SampleCleaner implements CleanerService {
 
   @override
   Future<StorageInfo?> storageInfo() async =>
-      const StorageInfo(total: 128 * _gb, free: 24 * _gb, label: 'dahili depolama dolu');
+      StorageInfo(total: 128 * _gb, free: 24 * _gb, label: L.t('dahili depolama dolu', 'internal storage used'));
 
   @override
   Future<bool> isAdmin() async => false;
@@ -59,25 +60,25 @@ class SampleCleaner implements CleanerService {
   Future<List<JunkCategory>?> scanJunk({ProgressReporter? onProgress, CancelToken? token}) async {
     if (!await _simulate('Ölçülüyor', onProgress, token)) return null;
     final all = [
-      JunkCategory(id: 'apk', name: 'Kurulum dosyaları (APK)', description: 'İndirilenler’de kalan kurulum dosyaları', sizeBytes: 640 * _mb),
+      JunkCategory(id: 'apk', name: L.t('Kurulum dosyaları (APK)', 'Install files (APK)'), description: L.t('İndirilenler’de kalan kurulum dosyaları', 'Install files left in Downloads'), sizeBytes: 640 * _mb),
       JunkCategory(
         id: 'olddl',
-        name: 'Eski indirmeler',
-        description: '90 günden eski, açılmamış dosyalar',
+        name: L.t('Eski indirmeler', 'Old downloads'),
+        description: L.t('90 günden eski, açılmamış dosyalar', 'Unopened files older than 90 days'),
         sizeBytes: 1220 * _mb,
-        warning: 'Gözden geçirin',
+        warning: L.t('Gözden geçirin', 'Review'),
         selected: false,
       ),
-      JunkCategory(id: 'empty', name: 'Boş klasörler', description: 'İçinde dosya kalmamış klasörler', sizeBytes: 4096),
+      JunkCategory(id: 'empty', name: L.t('Boş klasörler', 'Empty folders'), description: L.t('İçinde dosya kalmamış klasörler', 'Folders with no files left'), sizeBytes: 4096),
       JunkCategory(
         id: 'wa',
-        name: 'WhatsApp medyası',
-        description: 'Gönderilen videolar ve sesli mesajlar (izinle)',
+        name: L.t('WhatsApp medyası', 'WhatsApp media'),
+        description: L.t('Gönderilen videolar ve sesli mesajlar (izinle)', 'Sent videos and voice messages (with permission)'),
         sizeBytes: 2100 * _mb,
-        warning: 'Gözden geçirin',
+        warning: L.t('Gözden geçirin', 'Review'),
         selected: false,
       ),
-      JunkCategory(id: 'thumbs', name: 'Küçük resim dosyaları', description: '.thumbnails klasörü', sizeBytes: 180 * _mb),
+      JunkCategory(id: 'thumbs', name: L.t('Küçük resim dosyaları', 'Thumbnail files'), description: L.t('.thumbnails klasörü', '.thumbnails folder'), sizeBytes: 180 * _mb),
     ];
     return all.where((c) => !_removed.contains(c.id)).toList();
   }

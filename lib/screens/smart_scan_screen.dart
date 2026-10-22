@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/i18n.dart';
 import '../core/format.dart';
 import '../core/modules.dart';
 import '../core/theme.dart';
@@ -19,25 +20,26 @@ class SmartScanScreen extends StatelessWidget {
 
     final String title;
     if (state.scanning) {
-      title = 'Taranıyor…';
+      title = L.t('Taranıyor…', 'Scanning…');
     } else if (!scanned) {
-      title = 'Cihazınızı tarayın';
+      title = L.t('Cihazınızı tarayın', 'Scan your device');
     } else if (reclaim > 0) {
-      title = '${formatBytes(reclaim)} alan açılabilir';
+      title = L.t('${formatBytes(reclaim)} alan açılabilir', '${formatBytes(reclaim)} can be freed');
     } else {
-      title = 'Her şey temiz görünüyor';
+      title = L.t('Her şey temiz görünüyor', 'Everything looks clean');
     }
 
     final lastScan = state.lastScan;
     final step = state.scanning || state.scanStep.isNotEmpty
         ? state.scanStep
-        : (lastScan != null ? 'Son tarama: ${formatTime(lastScan)}' : 'Henüz tarama yapılmadı');
+        : (lastScan != null ? L.t('Son tarama: ${formatTime(lastScan)}', 'Last scan: ${formatTime(lastScan)}') : L.t('Henüz tarama yapılmadı', 'No scan yet'));
     final progress = state.progress;
     final live = state.scanning && progress != null ? progressLine(progress) : '';
 
     return ModulePage(
-      title: 'Akıllı Tarama',
-      subtitle: 'Tüm modüller tek seferde çalışır ve size kısa bir özet sunar. Hiçbir şey onayınız olmadan silinmez.',
+      title: L.t('Akıllı Tarama', 'Smart Scan'),
+      subtitle: L.t('Tüm modüller tek seferde çalışır ve size kısa bir özet sunar. Hiçbir şey onayınız olmadan silinmez.',
+          'All modules run at once and give you a short summary. Nothing is deleted without your approval.'),
       children: [
         if (state.service.isSample) const SampleBanner(),
         Card(
@@ -48,7 +50,7 @@ class SmartScanScreen extends StatelessWidget {
               runSpacing: 24,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                _StorageRing(ratio: ratio, label: storage?.label ?? 'depolama', known: storage != null),
+                _StorageRing(ratio: ratio, label: storage?.label ?? L.t('depolama', 'storage'), known: storage != null),
                 ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 520),
                   child: Column(
@@ -82,13 +84,13 @@ class SmartScanScreen extends StatelessWidget {
                         OutlinedButton.icon(
                           onPressed: state.cancel,
                           icon: const Icon(Icons.close, size: 18),
-                          label: const Text('İptal'),
+                          label: Text(L.t('İptal', 'Cancel')),
                         )
                       else
                         FilledButton.icon(
                           onPressed: state.anyBusy ? null : state.smartScan,
                           icon: const Icon(Icons.manage_search),
-                          label: Text(scanned ? 'Yeniden Tara' : 'Akıllı Taramayı Başlat'),
+                          label: Text(scanned ? L.t('Yeniden Tara', 'Scan again') : L.t('Akıllı Taramayı Başlat', 'Start Smart Scan')),
                         ),
                     ],
                   ),
@@ -98,7 +100,7 @@ class SmartScanScreen extends StatelessWidget {
           ),
         ),
         if (scanned && !state.scanning) ...[
-          const Text('Tarama özeti', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+          Text(L.t('Tarama özeti', 'Scan summary'), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
           _Summary(state: state),
         ],
       ],
@@ -165,20 +167,20 @@ class _Summary extends StatelessWidget {
     final startup = state.startup;
 
     final cards = [
-      _SummaryData('Gereksiz dosyalar', formatBytes(junkBytes), ModuleId.junk),
-      _SummaryData('Kopya dosyalar', '${formatCount(dupeFiles)} dosya · ${formatBytes(dupeBytes)}', ModuleId.duplicates),
+      _SummaryData(L.t('Gereksiz dosyalar', 'Junk files'), formatBytes(junkBytes), ModuleId.junk),
+      _SummaryData(L.t('Kopya dosyalar', 'Duplicate files'), L.t('${formatCount(dupeFiles)} dosya · ${formatBytes(dupeBytes)}', '${formatCount(dupeFiles)} files · ${formatBytes(dupeBytes)}'), ModuleId.duplicates),
       _SummaryData(
-        'En çok yer kaplayan',
-        biggest != null ? '${biggest.name} · ${formatBytes(biggest.bytes)}' : '—',
+        L.t('En çok yer kaplayan', 'Takes the most space'),
+        biggest != null ? '${folderLabel(biggest.name)} · ${formatBytes(biggest.bytes)}' : '—',
         ModuleId.diskMap,
       ),
       if (startup != null)
         _SummaryData(
-          'Başlangıç programları',
-          '${startup.where((s) => s.enabled).length} açılışta çalışıyor',
+          L.t('Başlangıç programları', 'Startup apps'),
+          L.t('${startup.where((s) => s.enabled).length} açılışta çalışıyor', '${startup.where((s) => s.enabled).length} run at startup'),
           ModuleId.startup,
         ),
-      _SummaryData('Toplam temizlenen', formatBytes(state.totalFreed), ModuleId.settings, action: 'Geçmişi gör →'),
+      _SummaryData(L.t('Toplam temizlenen', 'Total cleaned'), formatBytes(state.totalFreed), ModuleId.settings, action: L.t('Geçmişi gör →', 'See history →')),
     ];
 
     return Wrap(
@@ -222,7 +224,7 @@ class _Summary extends StatelessWidget {
 }
 
 class _SummaryData {
-  const _SummaryData(this.label, this.value, this.target, {this.action = 'İncele →'});
+  _SummaryData(this.label, this.value, this.target, {String? action}) : action = action ?? L.t('İncele →', 'Review →');
   final String label;
   final String value;
   final ModuleId target;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/i18n.dart';
 import '../core/format.dart';
 import '../core/modules.dart';
 import '../core/theme.dart';
@@ -15,7 +16,7 @@ class DuplicatesScreen extends StatelessWidget {
   static const maxGroups = 100;
 
   Future<void> _addFolder(AppState state) async {
-    final path = await pickFolder('Kopyaların aranacağı klasörü seçin');
+    final path = await pickFolder(L.t('Kopyaların aranacağı klasörü seçin', 'Choose a folder to search for duplicates'));
     if (path != null) await state.addRoot(path);
   }
 
@@ -23,14 +24,14 @@ class DuplicatesScreen extends StatelessWidget {
     final total = formatBytes(state.selectedDupeBytes);
     final ok = await confirm(
       context,
-      title: 'Kopyalar silinsin mi?',
-      message: '$total tutarındaki kopya dosyalar ${state.service.deleteDestination.toLowerCase()}.',
-      action: 'Sil',
+      title: L.t('Kopyalar silinsin mi?', 'Delete duplicates?'),
+      message: L.t('$total tutarındaki kopya dosyalar ${state.service.deleteDestination.toLowerCase()}.', '$total of duplicate files ${state.service.deleteDestination.toLowerCase()}.'),
+      action: L.t('Sil', 'Delete'),
     );
     if (!ok) return;
     final count = await state.deleteSelectedDuplicates();
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${formatCount(count)} dosya silindi.')));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(L.t('${formatCount(count)} dosya silindi.', '${formatCount(count)} files deleted.'))));
   }
 
   @override
@@ -44,7 +45,7 @@ class DuplicatesScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Taranacak klasörler', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+            Text(L.t('Taranacak klasörler', 'Folders to scan'), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
             const SizedBox(height: 12),
             Wrap(
               spacing: 8,
@@ -61,7 +62,7 @@ class DuplicatesScreen extends StatelessWidget {
                 if (!state.service.isSample)
                   ActionChip(
                     avatar: const Icon(Icons.create_new_folder_outlined, size: 18),
-                    label: const Text('Klasör ekle'),
+                    label: Text(L.t('Klasör ekle', 'Add folder')),
                     onPressed: state.dupesBusy ? null : () => _addFolder(state),
                   ),
               ],
@@ -72,18 +73,18 @@ class DuplicatesScreen extends StatelessWidget {
               spacing: 4,
               children: [
                 Text(
-                  '${formatBytes(state.settings.minDuplicateSize)} altındaki dosyalar atlanır'
-                  '${state.settings.excluded.isEmpty ? '' : ' · ${state.settings.excluded.length} klasör hariç'}',
+                  L.t('${formatBytes(state.settings.minDuplicateSize)} altındaki dosyalar atlanır', 'Files under ${formatBytes(state.settings.minDuplicateSize)} are skipped') +
+                      (state.settings.excluded.isEmpty ? '' : L.t(' · ${state.settings.excluded.length} klasör hariç', ' · ${state.settings.excluded.length} folders excluded')),
                   style: const TextStyle(color: AppColors.muted, fontSize: 13),
                 ),
-                TextButton(onPressed: () => state.open(ModuleId.settings), child: const Text('Değiştir')),
+                TextButton(onPressed: () => state.open(ModuleId.settings), child: Text(L.t('Değiştir', 'Change'))),
               ],
             ),
             const SizedBox(height: 8),
             FilledButton.icon(
               onPressed: state.anyBusy || state.dupeRoots.isEmpty ? null : state.scanDuplicates,
               icon: const Icon(Icons.search),
-              label: Text(dupes == null ? 'Kopyaları Bul' : 'Yeniden Tara'),
+              label: Text(dupes == null ? L.t('Kopyaları Bul', 'Find duplicates') : L.t('Yeniden Tara', 'Scan again')),
             ),
           ],
         ),
@@ -97,16 +98,17 @@ class DuplicatesScreen extends StatelessWidget {
 
     if (state.dupesBusy && state.progress != null) {
       children.add(ProgressCard(
-        title: 'Kopya dosyalar aranıyor…',
+        title: L.t('Kopya dosyalar aranıyor…', 'Looking for duplicates…'),
         progress: state.progress,
         onCancel: state.canCancel ? state.cancel : null,
       ));
     } else if (dupes != null && dupes.isEmpty) {
-      children.add(const EmptyState(icon: Icons.check_circle_outline, text: 'Seçili klasörlerde kopya dosya bulunamadı.'));
+      children.add(EmptyState(icon: Icons.check_circle_outline, text: L.t('Seçili klasörlerde kopya dosya bulunamadı.', 'No duplicates found in the selected folders.')));
     } else if (dupes != null) {
       final shown = dupes.take(maxGroups).toList();
       children.add(Text(
-        '${formatCount(dupes.length)} grupta toplam ${formatBytes(dupes.fold<int>(0, (s, g) => s + g.wastedBytes))} kopya bulundu.',
+        L.t('${formatCount(dupes.length)} grupta toplam ${formatBytes(dupes.fold<int>(0, (s, g) => s + g.wastedBytes))} kopya bulundu.',
+            '${formatBytes(dupes.fold<int>(0, (s, g) => s + g.wastedBytes))} of duplicates found in ${formatCount(dupes.length)} groups.'),
         style: const TextStyle(fontWeight: FontWeight.w600),
       ));
       children.add(Card(
@@ -120,22 +122,24 @@ class DuplicatesScreen extends StatelessWidget {
       ));
       if (dupes.length > maxGroups) {
         children.add(Text(
-          'En çok yer kaplayan $maxGroups grup gösteriliyor.',
+          L.t('En çok yer kaplayan $maxGroups grup gösteriliyor.', 'Showing the $maxGroups largest groups.'),
           style: const TextStyle(color: AppColors.muted, fontSize: 13),
         ));
       }
     }
 
     return ModulePage(
-      title: 'Kopya Dosyalar',
-      subtitle: 'İçeriği birebir aynı olan dosyalar gruplanır. Her gruptan en eski dosya korunur; '
-          'hangisinin kalacağını değiştirebilirsiniz.',
+      title: L.t('Kopya Dosyalar', 'Duplicate Files'),
+      subtitle: L.t(
+        'İçeriği birebir aynı olan dosyalar gruplanır. Her gruptan en eski dosya korunur; hangisinin kalacağını değiştirebilirsiniz.',
+        'Files with exactly the same content are grouped. The oldest file in each group is kept; you can choose a different one.',
+      ),
       bottom: dupes == null || dupes.isEmpty || (state.dupesBusy && state.progress != null)
           ? null
           : ActionBar(
               label: state.service.deleteDestination,
               value: formatBytes(state.selectedDupeBytes),
-              buttonText: 'Kopyaları Sil',
+              buttonText: L.t('Kopyaları Sil', 'Delete duplicates'),
               busy: state.dupesBusy,
               onPressed: state.selectedDupeBytes == 0 || state.anyBusy ? null : () => _delete(context, state),
             ),
@@ -169,7 +173,7 @@ class _GroupView extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Text(
-                '${group.files.length} kopya · her biri ${formatBytes(group.size)}',
+                L.t('${group.files.length} kopya · her biri ${formatBytes(group.size)}', '${group.files.length} copies · ${formatBytes(group.size)} each'),
                 style: const TextStyle(color: AppColors.muted, fontSize: 13),
               ),
             ],
@@ -189,21 +193,21 @@ class _GroupView extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(f.path, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 14)),
-                        Text('Değiştirilme: ${formatTime(f.modified)}', style: const TextStyle(fontSize: 12, color: AppColors.muted)),
+                        Text(L.t('Değiştirilme: ${formatTime(f.modified)}', 'Modified: ${formatTime(f.modified)}'), style: const TextStyle(fontSize: 12, color: AppColors.muted)),
                       ],
                     ),
                   ),
                   if (!state.service.isSample)
                     IconButton(
-                      tooltip: 'Klasörde göster',
+                      tooltip: L.t('Klasörde göster', 'Show in folder'),
                       onPressed: () => state.service.revealInExplorer(f.path),
                       icon: const Icon(Icons.folder_open_outlined, size: 20),
                     ),
                   const SizedBox(width: 4),
                   if (f.keep)
-                    const Tag.keep('Korunacak')
+                    Tag.keep(L.t('Korunacak', 'Keep'))
                   else
-                    TextButton(onPressed: () => state.keepDuplicate(group, f), child: const Text('Bunu koru')),
+                    TextButton(onPressed: () => state.keepDuplicate(group, f), child: Text(L.t('Bunu koru', 'Keep this'))),
                 ],
               ),
             ),

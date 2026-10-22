@@ -42,3 +42,10 @@ String baseName(String path) {
   final parts = path.split(RegExp(r'[\\/]')).where((p) => p.isNotEmpty).toList();
   return parts.isEmpty ? path : parts.last;
 }
+
+/// Ayrı iş parçacığında Türkçe üretilen sabit klasör adlarını çevirir.
+String folderLabel(String name) => switch (name) {
+      'Bu klasördeki dosyalar' => L.t(name, 'Files in this folder'),
+      'Diğer' => L.t(name, 'Other'),
+      _ => name,
+    };

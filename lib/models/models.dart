@@ -1,3 +1,4 @@
+import '../core/i18n.dart';
 import '../core/format.dart';
 
 // ---------------------------------------------------------------------------
@@ -418,7 +419,7 @@ class GpsPhoto {
   String get coordinates {
     final lat = latitude;
     final lon = longitude;
-    if (lat == null || lon == null) return 'Konum kaydı var';
+    if (lat == null || lon == null) return L.t('Konum kaydı var', 'Has a location');
     return '${lat.toStringAsFixed(4)}, ${lon.toStringAsFixed(4)}';
   }
 }

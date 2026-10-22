@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/i18n.dart';
 import '../core/format.dart';
 import '../core/theme.dart';
 import '../models/models.dart';
@@ -31,23 +32,23 @@ class _HealthScreenState extends State<HealthScreen> {
     final missingDetails = disks.isNotEmpty && disks.every((d) => d.temperature == null && d.wear == null);
 
     return ModulePage(
-      title: 'Pil ve Sağlık',
-      subtitle: 'Pilin ve disklerin durumu. Bilgiler Windows’un kendi kayıtlarından okunur.',
+      title: L.t('Pil ve Sağlık', 'Battery & Health'),
+      subtitle: L.t('Pilin ve disklerin durumu. Bilgiler Windows’un kendi kayıtlarından okunur.', 'The condition of your battery and disks, read from Windows’ own records.'),
       children: [
         if (state.service.isSample) const SampleBanner(),
         if (!state.healthLoaded)
-          const BusyCard(text: 'Pil ve disk bilgileri okunuyor…')
+          BusyCard(text: L.t('Pil ve disk bilgileri okunuyor…', 'Reading battery and disk information…'))
         else ...[
           _BatteryCard(battery: state.battery, onReport: state.service.isSample ? null : state.service.openBatteryReport),
           if (state.admin == false && missingDetails)
-            const AdminBanner(message: 'Disk sıcaklığı ve yıpranma bilgisi için yönetici izni gerekir.'),
+            AdminBanner(message: L.t('Disk sıcaklığı ve yıpranma bilgisi için yönetici izni gerekir.', 'Disk temperature and wear need administrator rights.')),
           for (final d in disks) _DiskCard(disk: d),
           Align(
             alignment: Alignment.centerLeft,
             child: OutlinedButton.icon(
               onPressed: state.healthBusy ? null : state.loadHealth,
               icon: const Icon(Icons.refresh, size: 18),
-              label: const Text('Yenile'),
+              label: Text(L.t('Yenile', 'Refresh')),
             ),
           ),
         ],
@@ -66,18 +67,18 @@ class _BatteryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final b = battery;
     if (b == null) {
-      return const EmptyState(
+      return EmptyState(
         icon: Icons.power_outlined,
-        text: 'Bu bilgisayarda pil bulunamadı. Masaüstü bilgisayarlarda bu bölüm boş kalır.',
+        text: L.t('Bu bilgisayarda pil bulunamadı. Masaüstü bilgisayarlarda bu bölüm boş kalır.', 'No battery found. This section stays empty on desktop computers.'),
       );
     }
     final pct = (b.health * 100).round().clamp(0, 100);
     final (label, color) = pct >= 80
-        ? ('İyi durumda', AppColors.keepText)
+        ? (L.t('İyi durumda', 'Good condition'), AppColors.keepText)
         : pct >= 60
-            ? ('Yıpranmış', AppColors.warnText)
-            : ('Değiştirmeyi düşünebilirsiniz', const Color(0xFFB91C1C));
-    String wh(int mwh) => '${(mwh / 1000).toStringAsFixed(1).replaceAll('.', ',')} Wh';
+            ? (L.t('Yıpranmış', 'Worn'), AppColors.warnText)
+            : (L.t('Değiştirmeyi düşünebilirsiniz', 'Consider replacing it'), const Color(0xFFB91C1C));
+    String wh(int mwh) => '${formatDecimal(mwh / 1000, 1)} Wh';
     final report = onReport;
 
     return Card(
@@ -105,8 +106,8 @@ class _BatteryCard extends StatelessWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text('%$pct', style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800)),
-                        const Text('pil sağlığı', style: TextStyle(fontSize: 12, color: AppColors.muted)),
+                        Text(L.t('%$pct', '$pct%'), style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800)),
+                        Text(L.t('pil sağlığı', 'battery health'), style: const TextStyle(fontSize: 12, color: AppColors.muted)),
                       ],
                     ),
                   ),
@@ -120,14 +121,14 @@ class _BatteryCard extends StatelessWidget {
                 children: [
                   Text(label, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: color)),
                   const SizedBox(height: 10),
-                  _InfoLine('İlk günkü kapasite', wh(b.designCapacity)),
-                  _InfoLine('Bugünkü tam şarj kapasitesi', wh(b.fullChargeCapacity)),
-                  if (b.cycleCount != null && b.cycleCount! > 0) _InfoLine('Şarj döngüsü', formatCount(b.cycleCount!)),
-                  if (b.chemistry.isNotEmpty) _InfoLine('Pil tipi', b.chemistry),
+                  _InfoLine(L.t('İlk günkü kapasite', 'Original capacity'), wh(b.designCapacity)),
+                  _InfoLine(L.t('Bugünkü tam şarj kapasitesi', 'Full charge capacity today'), wh(b.fullChargeCapacity)),
+                  if (b.cycleCount != null && b.cycleCount! > 0) _InfoLine(L.t('Şarj döngüsü', 'Charge cycles'), formatCount(b.cycleCount!)),
+                  if (b.chemistry.isNotEmpty) _InfoLine(L.t('Pil tipi', 'Battery type'), b.chemistry),
                   const SizedBox(height: 10),
-                  const Text(
-                    'Pil sağlığı, pilin bugün tutabildiği enerjinin ilk günkü kapasitesine oranıdır. '
-                    'Zamanla düşmesi normaldir.',
+                  Text(
+                    L.t('Pil sağlığı, pilin bugün tutabildiği enerjinin ilk günkü kapasitesine oranıdır. Zamanla düşmesi normaldir.',
+                        'Battery health is how much energy the battery can hold today compared with when it was new. It’s normal for it to drop over time.'),
                     style: TextStyle(fontSize: 13, color: AppColors.muted, height: 1.4),
                   ),
                   if (report != null) ...[
@@ -135,7 +136,7 @@ class _BatteryCard extends StatelessWidget {
                     OutlinedButton.icon(
                       onPressed: report,
                       icon: const Icon(Icons.open_in_new, size: 18),
-                      label: const Text('Ayrıntılı pil raporunu aç'),
+                      label: Text(L.t('Ayrıntılı pil raporunu aç', 'Open detailed battery report')),
                     ),
                   ],
                 ],
@@ -156,10 +157,10 @@ class _DiskCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, bg, fg) = switch (disk.status.toLowerCase()) {
-      'healthy' => ('Sağlıklı', AppColors.keepBg, AppColors.keepText),
-      'warning' => ('Uyarı', AppColors.warnBg, AppColors.warnText),
-      'unhealthy' => ('Sorunlu', const Color(0xFFFEE2E2), const Color(0xFFB91C1C)),
-      _ => ('Bilinmiyor', const Color(0xFFF3F4F6), const Color(0xFF374151)),
+      'healthy' => (L.t('Sağlıklı', 'Healthy'), AppColors.keepBg, AppColors.keepText),
+      'warning' => (L.t('Uyarı', 'Warning'), AppColors.warnBg, AppColors.warnText),
+      'unhealthy' => (L.t('Sorunlu', 'Unhealthy'), const Color(0xFFFEE2E2), const Color(0xFFB91C1C)),
+      _ => (L.t('Bilinmiyor', 'Unknown'), const Color(0xFFF3F4F6), const Color(0xFF374151)),
     };
     final type = [
       if (disk.mediaType.isNotEmpty && disk.mediaType != 'Unspecified') disk.mediaType,
@@ -198,9 +199,9 @@ class _DiskCard extends StatelessWidget {
                   spacing: 28,
                   runSpacing: 8,
                   children: [
-                    if (disk.temperature != null) _Metric('Sıcaklık', '${disk.temperature} °C'),
-                    if (disk.wear != null) _Metric('Yıpranma', '%${disk.wear}'),
-                    if (disk.powerOnHours != null) _Metric('Çalışma süresi', '${formatCount(disk.powerOnHours!)} saat'),
+                    if (disk.temperature != null) _Metric(L.t('Sıcaklık', 'Temperature'), '${disk.temperature} °C'),
+                    if (disk.wear != null) _Metric(L.t('Yıpranma', 'Wear'), L.t('%${disk.wear}', '${disk.wear}%')),
+                    if (disk.powerOnHours != null) _Metric(L.t('Çalışma süresi', 'Power-on time'), L.t('${formatCount(disk.powerOnHours!)} saat', '${formatCount(disk.powerOnHours!)} hours')),
                   ],
                 ),
               ),

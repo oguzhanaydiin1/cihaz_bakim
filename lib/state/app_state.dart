@@ -118,12 +118,12 @@ class AppState extends ChangeNotifier {
     if (anyBusy) return;
     scanning = true;
     final t = _begin();
-    const cancelled = 'Tarama iptal edildi.';
+    final cancelled = L.t('Tarama iptal edildi.', 'Scan cancelled.');
     try {
-      _stage('Depolama bilgisi okunuyor…', 0.02);
+      _stage(L.t('Depolama bilgisi okunuyor…', 'Reading storage information…'), 0.02);
       storage = await service.storageInfo();
 
-      _stage('Gereksiz dosyalar taranıyor…', 0.1);
+      _stage(L.t('Gereksiz dosyalar taranıyor…', 'Scanning for junk files…'), 0.1);
       final j = await service.scanJunk(onProgress: _onProgress, token: t);
       if (j == null) {
         scanStep = cancelled;
@@ -131,7 +131,7 @@ class AppState extends ChangeNotifier {
       }
       junk = j;
 
-      _stage('Kopya dosyalar aranıyor…', 0.35);
+      _stage(L.t('Kopya dosyalar aranıyor…', 'Looking for duplicates…'), 0.35);
       final d = await service.findDuplicates(
         dupeRoots,
         minSize: settings.minDuplicateSize,
@@ -145,7 +145,7 @@ class AppState extends ChangeNotifier {
       }
       dupes = d;
 
-      _stage('Klasör boyutları hesaplanıyor…', 0.7);
+      _stage(L.t('Klasör boyutları hesaplanıyor…', 'Calculating folder sizes…'), 0.7);
       final u = await service.folderUsage(usageRoot, onProgress: _onProgress, token: t);
       if (u == null) {
         scanStep = cancelled;
@@ -154,7 +154,7 @@ class AppState extends ChangeNotifier {
       usage = u;
 
       if (service.supportsStartup) {
-        _stage('Başlangıç programları okunuyor…', 0.95);
+        _stage(L.t('Başlangıç programları okunuyor…', 'Reading startup apps…'), 0.95);
         startup = await service.startupItems();
       }
 
@@ -162,7 +162,7 @@ class AppState extends ChangeNotifier {
       scanStep = '';
       scanStage = 1;
     } catch (e) {
-      scanStep = 'Tarama sırasında bir hata oluştu: $e';
+      scanStep = L.t('Tarama sırasında bir hata oluştu: $e', 'Something went wrong during the scan: $e');
     } finally {
       scanning = false;
       _end(t);
@@ -221,7 +221,7 @@ class AppState extends ChangeNotifier {
     notifyListeners();
     try {
       final result = await service.cleanJunk(selected, onProgress: _onProgress);
-      await _record('Gereksiz dosya temizliği', result.freedBytes);
+      await _record(L.t('Gereksiz dosya temizliği', 'Junk file cleanup'), result.freedBytes);
       _end(t);
       _token = _begin(); // yeniden tarama da iptal edilebilsin
       final again = await service.scanJunk(onProgress: _onProgress, token: _token);
@@ -322,7 +322,7 @@ class AppState extends ChangeNotifier {
       final deleted = await service.deleteFiles(paths);
       if (deleted > 0) {
         // Kısmen silindiyse yaklaşık değer: silinen oranında.
-        await _record('Kopya dosyalar silindi', (bytes * deleted / paths.length).round());
+        await _record(L.t('Kopya dosyalar silindi', 'Duplicates deleted'), (bytes * deleted / paths.length).round());
       }
       for (final g in groups) {
         g.files.removeWhere((f) => f.selected);
@@ -440,7 +440,7 @@ class AppState extends ChangeNotifier {
       if (removed && loc.isNotEmpty && service.isSafeLeftover(loc) && Directory(loc).existsSync()) {
         leftover = loc;
       }
-      if (removed) await _record('Program kaldırıldı: ${app.name}', app.sizeBytes);
+      if (removed) await _record(L.t('Program kaldırıldı: ${app.name}', 'Uninstalled: ${app.name}'), app.sizeBytes);
       return UninstallOutcome(removed: removed, leftoverFolder: leftover);
     } finally {
       uninstalling = null;
@@ -533,7 +533,7 @@ class AppState extends ChangeNotifier {
       if (r != null) {
         final done = r.donePaths.toSet();
         photos?.removeWhere((p) => done.contains(p.path));
-        await _record('Fotoğraflar küçültüldü (${r.compressed} adet)', r.savedBytes);
+        await _record(L.t('Fotoğraflar küçültüldü (${r.compressed} adet)', 'Photos compressed (${r.compressed})'), r.savedBytes);
         storage = await service.storageInfo();
       }
       return r;

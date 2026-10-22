@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/i18n.dart';
 import '../core/modules.dart';
 import '../core/theme.dart';
 import '../widgets/common.dart';
@@ -13,7 +14,7 @@ class ComingSoonScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return ModulePage(
       title: module.name,
-      subtitle: '${module.description} Sürüm ${module.version} ile gelecek.',
+      subtitle: L.t('${module.description} Sürüm ${module.version} ile gelecek.', '${module.description} Coming in version ${module.version}.'),
       children: [
         Card(
           child: Padding(
@@ -21,7 +22,7 @@ class ComingSoonScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Planlanan özellikler', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                Text(L.t('Planlanan özellikler', 'Planned features'), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
                 const SizedBox(height: 12),
                 for (final p in module.plan)
                   Padding(

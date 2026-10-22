@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/i18n.dart';
 import '../core/theme.dart';
 import '../models/models.dart';
 import '../state/app_state.dart';
@@ -28,7 +29,7 @@ class _StartupScreenState extends State<StartupScreen> {
     final error = await state.toggleStartup(item);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(error ?? (item.enabled ? '${item.name} açılışta çalışacak.' : '${item.name} artık açılışta çalışmayacak.')),
+      content: Text(error ?? (item.enabled ? L.t('${item.name} açılışta çalışacak.', '${item.name} will run at startup.') : L.t('${item.name} artık açılışta çalışmayacak.', '${item.name} will no longer run at startup.'))),
     ));
   }
 
@@ -39,9 +40,9 @@ class _StartupScreenState extends State<StartupScreen> {
 
     Widget content;
     if (items == null || (state.startupBusy && items.isEmpty)) {
-      content = const BusyCard(text: 'Başlangıç programları okunuyor…');
+      content = BusyCard(text: L.t('Başlangıç programları okunuyor…', 'Reading startup apps…'));
     } else if (items.isEmpty) {
-      content = const EmptyState(icon: Icons.check_circle_outline, text: 'Açılışta çalışan program bulunamadı.');
+      content = EmptyState(icon: Icons.check_circle_outline, text: L.t('Açılışta çalışan program bulunamadı.', 'No apps run at startup.'));
     } else {
       content = Card(
         clipBehavior: Clip.antiAlias,
@@ -67,25 +68,27 @@ class _StartupScreenState extends State<StartupScreen> {
     final machineItems = (items ?? []).any((s) => s.scope == StartupScope.machine);
 
     return ModulePage(
-      title: 'Başlangıç Programları',
-      subtitle: 'Bilgisayar açılırken kendiliğinden başlayan programlar. Kapatmak programı silmez; '
-          'Görev Yöneticisi’ndeki gibi yalnızca açılışta çalışmasını engeller ve her zaman geri açılabilir.',
+      title: L.t('Başlangıç Programları', 'Startup Apps'),
+      subtitle: L.t(
+        'Bilgisayar açılırken kendiliğinden başlayan programlar. Kapatmak programı silmez; Görev Yöneticisi’ndeki gibi yalnızca açılışta çalışmasını engeller ve her zaman geri açılabilir.',
+        'Programs that start by themselves when your computer starts. Turning one off doesn’t remove it; like Task Manager, it only stops it from starting and can always be turned back on.',
+      ),
       children: [
         if (state.admin == false && machineItems)
-          const AdminBanner(message: '“Tüm kullanıcılar” etiketli programları değiştirmek için yönetici izni gerekir.'),
+          AdminBanner(message: L.t('“Tüm kullanıcılar” etiketli programları değiştirmek için yönetici izni gerekir.', 'Changing apps marked “All users” requires administrator rights.')),
         if (items != null && items.isNotEmpty)
           Row(
             children: [
               Expanded(
                 child: Text(
-                  '$enabledCount program açılışta çalışıyor · ${items.length - enabledCount} kapalı',
+                  L.t('$enabledCount program açılışta çalışıyor · ${items.length - enabledCount} kapalı', '$enabledCount run at startup · ${items.length - enabledCount} off'),
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               ),
               OutlinedButton.icon(
                 onPressed: state.startupBusy ? null : state.loadStartup,
                 icon: const Icon(Icons.refresh, size: 18),
-                label: const Text('Yenile'),
+                label: Text(L.t('Yenile', 'Refresh')),
               ),
             ],
           ),
@@ -133,12 +136,12 @@ class _StartupRow extends StatelessWidget {
                   runSpacing: 4,
                   children: [
                     Tag(
-                      item.scope == StartupScope.machine ? 'Tüm kullanıcılar' : 'Bu kullanıcı',
+                      item.scope == StartupScope.machine ? L.t('Tüm kullanıcılar', 'All users') : L.t('Bu kullanıcı', 'This user'),
                       background: const Color(0xFFF3F4F6),
                       foreground: const Color(0xFF374151),
                     ),
                     Tag(
-                      item.fromFolder ? 'Başlangıç klasörü' : 'Kayıt defteri',
+                      item.fromFolder ? L.t('Başlangıç klasörü', 'Startup folder') : L.t('Kayıt defteri', 'Registry'),
                       background: const Color(0xFFF3F4F6),
                       foreground: const Color(0xFF374151),
                     ),
@@ -149,7 +152,7 @@ class _StartupRow extends StatelessWidget {
           ),
           if (item.targetPath != null)
             IconButton(
-              tooltip: 'Dosya konumunu aç',
+              tooltip: L.t('Dosya konumunu aç', 'Open file location'),
               onPressed: onReveal,
               icon: const Icon(Icons.folder_open_outlined, size: 20),
             ),

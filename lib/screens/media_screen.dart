@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/i18n.dart';
 import '../core/format.dart';
 import '../core/theme.dart';
 import '../models/models.dart';
@@ -18,18 +19,21 @@ class MediaScreen extends StatelessWidget {
     final o = state.compressOptions;
     final ok = await confirm(
       context,
-      title: '${selected.length} fotoğraf küçültülsün mü?',
-      message: 'Toplam ${formatBytes(total)}. '
-          '${o.backup ? 'Orijinaller Geri Dönüşüm Kutusu’na taşınacak; yer, kutu boşaltılınca açılır.' : 'Orijinaller kalıcı olarak değiştirilecek, geri alınamaz.'}',
-      action: 'Küçült',
+      title: L.t('${selected.length} fotoğraf küçültülsün mü?', 'Compress ${selected.length} photos?'),
+      message: L.t('Toplam ${formatBytes(total)}. ', 'Total ${formatBytes(total)}. ') +
+          (o.backup
+              ? L.t('Orijinaller Geri Dönüşüm Kutusu’na taşınacak; yer, kutu boşaltılınca açılır.',
+                  'The originals will be moved to the Recycle Bin; the space is freed when you empty it.')
+              : L.t('Orijinaller kalıcı olarak değiştirilecek, geri alınamaz.', 'The originals will be replaced permanently. This can’t be undone.')),
+      action: L.t('Küçült', 'Compress'),
     );
     if (!ok || !context.mounted) return;
     final r = await state.compressSelectedPhotos();
     if (r == null || !context.mounted) return;
     final parts = <String>[
-      '${r.compressed} fotoğraf küçültüldü, ${formatBytes(r.savedBytes)} kazanıldı.',
-      if (r.skipped > 0) '${r.skipped} fotoğraf zaten yeterince küçük olduğu için atlandı.',
-      if (r.failed > 0) '${r.failed} fotoğraf işlenemedi.',
+      L.t('${r.compressed} fotoğraf küçültüldü, ${formatBytes(r.savedBytes)} kazanıldı.', '${r.compressed} photos compressed, ${formatBytes(r.savedBytes)} saved.'),
+      if (r.skipped > 0) L.t('${r.skipped} fotoğraf zaten yeterince küçük olduğu için atlandı.', '${r.skipped} photos were already small enough and were skipped.'),
+      if (r.failed > 0) L.t('${r.failed} fotoğraf işlenemedi.', '${r.failed} photos couldn’t be processed.'),
     ];
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(parts.join(' '))));
   }
@@ -50,18 +54,18 @@ class MediaScreen extends StatelessWidget {
             if (!state.service.isSample) ...[
               FolderBar(
                 path: state.photosRoot,
-                title: 'Fotoğrafların bulunduğu klasörü seçin',
+                title: L.t('Fotoğrafların bulunduğu klasörü seçin', 'Choose the folder with your photos'),
                 enabled: !state.anyBusy,
                 onChanged: (p) => state.findPhotos(p),
               ),
               const SizedBox(height: 18),
             ],
-            const Text('Kalite', style: TextStyle(fontWeight: FontWeight.w600)),
+            Text(L.t('Kalite', 'Quality'), style: const TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             SegmentedButton<int>(
-              segments: const [
-                ButtonSegment(value: 85, label: Text('Yüksek kalite')),
-                ButtonSegment(value: 75, label: Text('Dengeli')),
+              segments: [
+                ButtonSegment(value: 85, label: Text(L.t('Yüksek kalite', 'High quality'))),
+                ButtonSegment(value: 75, label: Text(L.t('Dengeli', 'Balanced'))),
               ],
               selected: {o.quality},
               showSelectedIcon: false,
@@ -72,13 +76,13 @@ class MediaScreen extends StatelessWidget {
                       ),
             ),
             const SizedBox(height: 16),
-            const Text('Boyut sınırı', style: TextStyle(fontWeight: FontWeight.w600)),
+            Text(L.t('Boyut sınırı', 'Size limit'), style: const TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             SegmentedButton<int>(
-              segments: const [
-                ButtonSegment(value: 0, label: Text('Orijinal')),
-                ButtonSegment(value: 3840, label: Text('En fazla 4K')),
-                ButtonSegment(value: 1920, label: Text('En fazla Full HD')),
+              segments: [
+                ButtonSegment(value: 0, label: Text(L.t('Orijinal', 'Original'))),
+                ButtonSegment(value: 3840, label: Text(L.t('En fazla 4K', 'Up to 4K'))),
+                ButtonSegment(value: 1920, label: Text(L.t('En fazla Full HD', 'Up to Full HD'))),
               ],
               selected: {o.maxDimension},
               showSelectedIcon: false,
@@ -97,9 +101,9 @@ class MediaScreen extends StatelessWidget {
                   : (v) => state.setCompressOptions(
                         CompressOptions(quality: o.quality, maxDimension: o.maxDimension, backup: v),
                       ),
-              title: const Text('Orijinalleri Geri Dönüşüm Kutusu’na yedekle', style: TextStyle(fontSize: 14)),
-              subtitle: const Text(
-                'Önerilir. Sonuçtan memnunsanız kutuyu boşaltınca yer açılır.',
+              title: Text(L.t('Orijinalleri Geri Dönüşüm Kutusu’na yedekle', 'Back up originals to the Recycle Bin'), style: const TextStyle(fontSize: 14)),
+              subtitle: Text(
+                L.t('Önerilir. Sonuçtan memnunsanız kutuyu boşaltınca yer açılır.', 'Recommended. If you’re happy with the result, empty the bin to free the space.'),
                 style: TextStyle(fontSize: 12),
               ),
             ),
@@ -107,12 +111,12 @@ class MediaScreen extends StatelessWidget {
             FilledButton.icon(
               onPressed: state.anyBusy ? null : () => state.findPhotos(),
               icon: const Icon(Icons.search),
-              label: Text(photos == null ? 'Fotoğrafları Bul' : 'Yeniden Ara'),
+              label: Text(photos == null ? L.t('Fotoğrafları Bul', 'Find photos') : L.t('Yeniden Ara', 'Search again')),
             ),
             const SizedBox(height: 10),
-            const Text(
-              '1 MB’tan büyük JPEG fotoğraflar listelenir. En az %10 küçülmeyecek fotoğraflara dokunulmaz. '
-              'Çekim tarihi gibi bilgiler korunur.',
+            Text(
+              L.t('1 MB’tan büyük JPEG fotoğraflar listelenir. En az %10 küçülmeyecek fotoğraflara dokunulmaz. Çekim tarihi gibi bilgiler korunur.',
+                  'JPEG photos larger than 1 MB are listed. Photos that wouldn’t shrink by at least 10% are left alone. Details like the date taken are kept.'),
               style: TextStyle(fontSize: 13, color: AppColors.muted, height: 1.4),
             ),
           ],
@@ -127,12 +131,12 @@ class MediaScreen extends StatelessWidget {
 
     if (busy) {
       children.add(ProgressCard(
-        title: photos == null ? 'Fotoğraflar aranıyor…' : 'Fotoğraflar işleniyor…',
+        title: photos == null ? L.t('Fotoğraflar aranıyor…', 'Looking for photos…') : L.t('Fotoğraflar işleniyor…', 'Processing photos…'),
         progress: state.progress,
         onCancel: state.canCancel ? state.cancel : null,
       ));
     } else if (photos != null && photos.isEmpty) {
-      children.add(const EmptyState(icon: Icons.photo_outlined, text: 'Bu klasörde 1 MB’tan büyük JPEG fotoğraf bulunamadı.'));
+      children.add(EmptyState(icon: Icons.photo_outlined, text: L.t('Bu klasörde 1 MB’tan büyük JPEG fotoğraf bulunamadı.', 'No JPEG photos larger than 1 MB in this folder.')));
     } else if (photos != null) {
       final allSelected = photos.every((p) => p.selected);
       final shown = photos.take(maxShown).toList();
@@ -145,7 +149,7 @@ class MediaScreen extends StatelessWidget {
               onChanged: (v) => state.selectAllPhotos(v ?? false),
               controlAffinity: ListTileControlAffinity.leading,
               title: Text(
-                '${formatCount(photos.length)} fotoğraf · ${formatBytes(photos.fold<int>(0, (s, p) => s + p.sizeBytes))}',
+                L.t('${formatCount(photos.length)} fotoğraf', '${formatCount(photos.length)} photos') + ' · ${formatBytes(photos.fold<int>(0, (s, p) => s + p.sizeBytes))}',
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
             ),
@@ -156,7 +160,7 @@ class MediaScreen extends StatelessWidget {
       ));
       if (photos.length > maxShown) {
         children.add(Text(
-          'En büyük $maxShown fotoğraf gösteriliyor; seçim tümüne uygulanır.',
+          L.t('En büyük $maxShown fotoğraf gösteriliyor; seçim tümüne uygulanır.', 'Showing the $maxShown largest photos; your selection applies to all.'),
           style: const TextStyle(color: AppColors.muted, fontSize: 13),
         ));
       }
@@ -164,14 +168,14 @@ class MediaScreen extends StatelessWidget {
 
     final selected = state.selectedPhotos;
     return ModulePage(
-      title: 'Medya Küçültücü',
-      subtitle: 'Büyük fotoğrafları gözle görülür kalite kaybı olmadan küçültür.',
+      title: L.t('Medya Küçültücü', 'Photo Compressor'),
+      subtitle: L.t('Büyük fotoğrafları gözle görülür kalite kaybı olmadan küçültür.', 'Shrinks large photos without visible loss of quality.'),
       bottom: photos == null || photos.isEmpty || busy
           ? null
           : ActionBar(
-              label: '${selected.length} fotoğraf seçili',
+              label: L.t('${selected.length} fotoğraf seçili', '${selected.length} photos selected'),
               value: formatBytes(selected.fold<int>(0, (s, p) => s + p.sizeBytes)),
-              buttonText: 'Küçült',
+              buttonText: L.t('Küçült', 'Compress'),
               onPressed: selected.isEmpty || state.anyBusy ? null : () => _compress(context, state),
             ),
       children: children,

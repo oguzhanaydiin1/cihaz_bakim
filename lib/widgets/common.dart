@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/i18n.dart';
 import '../core/format.dart';
 import '../core/theme.dart';
 import '../models/models.dart';
@@ -193,11 +194,11 @@ class BusyCard extends StatelessWidget {
 /// "1.234 dosya · 2,1 GB" gibi canlı ilerleme satırı.
 String progressLine(ScanProgress p) {
   final parts = <String>[];
-  if (p.phase.isNotEmpty) parts.add(p.phase);
+  if (p.phase.isNotEmpty) parts.add(L.phase(p.phase));
   if (p.total > 0) {
-    parts.add('${formatCount(p.files)} / ${formatCount(p.total)} dosya');
+    parts.add(L.t('${formatCount(p.files)} / ${formatCount(p.total)} dosya', '${formatCount(p.files)} / ${formatCount(p.total)} files'));
   } else if (p.files > 0) {
-    parts.add('${formatCount(p.files)} dosya');
+    parts.add(L.t('${formatCount(p.files)} dosya', '${formatCount(p.files)} files'));
   }
   if (p.bytes > 0) parts.add(formatBytes(p.bytes));
   return parts.join(' · ');
@@ -239,7 +240,7 @@ class ProgressCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            Text(line.isEmpty ? 'Başlatılıyor…' : line, style: const TextStyle(fontSize: 14, color: AppColors.text)),
+            Text(line.isEmpty ? L.t('Başlatılıyor…', 'Starting…') : line, style: const TextStyle(fontSize: 14, color: AppColors.text)),
             if (p.current.isNotEmpty) ...[
               const SizedBox(height: 4),
               Text(
@@ -251,7 +252,7 @@ class ProgressCard extends StatelessWidget {
             ],
             if (cancel != null) ...[
               const SizedBox(height: 18),
-              OutlinedButton.icon(onPressed: cancel, icon: const Icon(Icons.close, size: 18), label: const Text('İptal')),
+              OutlinedButton.icon(onPressed: cancel, icon: const Icon(Icons.close, size: 18), label: Text(L.t('İptal', 'Cancel'))),
             ],
           ],
         ),
@@ -288,7 +289,7 @@ class AdminBanner extends StatelessWidget {
               ],
             ),
           ),
-          TextButton(onPressed: () => relaunchAsAdmin(context), child: const Text('Yönetici olarak yeniden başlat')),
+          TextButton(onPressed: () => relaunchAsAdmin(context), child: Text(L.t('Yönetici olarak yeniden başlat', 'Restart as administrator'))),
         ],
       ),
     );
@@ -298,14 +299,15 @@ class AdminBanner extends StatelessWidget {
 Future<void> relaunchAsAdmin(BuildContext context) async {
   final ok = await confirm(
     context,
-    title: 'Yönetici olarak yeniden başlatılsın mı?',
-    message: 'Uygulama kapanıp yönetici izniyle yeniden açılacak. Windows izin isteyecek; onay vermeniz gerekir.',
-    action: 'Yeniden başlat',
+    title: L.t('Yönetici olarak yeniden başlatılsın mı?', 'Restart as administrator?'),
+    message: L.t('Uygulama kapanıp yönetici izniyle yeniden açılacak. Windows izin isteyecek; onay vermeniz gerekir.',
+        'The app will close and reopen with administrator rights. Windows will ask for permission; you’ll need to approve it.'),
+    action: L.t('Yeniden başlat', 'Restart'),
   );
   if (!ok || !context.mounted) return;
   final started = await AppScope.read(context).relaunchAsAdmin();
   if (!started && context.mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Yönetici izni verilmedi.')));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(L.t('Yönetici izni verilmedi.', 'Administrator rights weren’t granted.'))));
   }
 }
 
@@ -318,14 +320,15 @@ class SampleBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(color: AppColors.warnBg, borderRadius: BorderRadius.circular(12)),
-      child: const Row(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(Icons.info_outline, size: 20, color: AppColors.warnText),
           SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Bu platformda örnek veriler gösteriliyor. Gerçek tarama şu an yalnızca Windows sürümünde çalışıyor.',
+              L.t('Bu platformda örnek veriler gösteriliyor. Gerçek tarama şu an yalnızca Windows sürümünde çalışıyor.',
+                  'Sample data is shown on this platform. Real scanning currently works only in the Windows version.'),
               style: TextStyle(color: AppColors.warnText, fontSize: 13, height: 1.4),
             ),
           ),
@@ -342,7 +345,7 @@ Future<bool> confirm(BuildContext context, {required String title, required Stri
       title: Text(title),
       content: Text(message),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Vazgeç')),
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(L.t('Vazgeç', 'Cancel'))),
         FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(action)),
       ],
     ),
@@ -352,12 +355,12 @@ Future<bool> confirm(BuildContext context, {required String title, required Stri
 
 /// Seçili klasörü gösterir ve "Klasör seç" butonu sunar.
 class FolderBar extends StatelessWidget {
-  const FolderBar({super.key, required this.path, required this.onChanged, this.enabled = true, this.title = 'Klasör seçin'});
+  const FolderBar({super.key, required this.path, required this.onChanged, this.enabled = true, this.title});
 
   final String path;
   final ValueChanged<String> onChanged;
   final bool enabled;
-  final String title;
+  final String? title;
 
   @override
   Widget build(BuildContext context) {
@@ -369,12 +372,12 @@ class FolderBar extends StatelessWidget {
         OutlinedButton.icon(
           onPressed: enabled
               ? () async {
-                  final p = await pickFolder(title, initialDirectory: path);
+                  final p = await pickFolder(title ?? L.t('Klasör seçin', 'Choose a folder'), initialDirectory: path);
                   if (p != null) onChanged(p);
                 }
               : null,
           icon: const Icon(Icons.folder_open_outlined, size: 18),
-          label: const Text('Klasör seç'),
+          label: Text(L.t('Klasör seç', 'Choose folder')),
         ),
         Text(path, style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.text)),
       ],

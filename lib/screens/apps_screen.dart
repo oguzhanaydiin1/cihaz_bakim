@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/i18n.dart';
 import '../core/format.dart';
 import '../core/theme.dart';
 import '../models/models.dart';
@@ -54,10 +55,12 @@ class _AppsScreenState extends State<AppsScreen> {
   Future<void> _uninstall(AppState state, InstalledApp app) async {
     final ok = await confirm(
       context,
-      title: '${app.name} kaldırılsın mı?',
-      message: 'Programın kendi kaldırıcısı açılacak. Onun adımlarını tamamlayın; '
-          'Windows izin isteyebilir.',
-      action: 'Kaldır',
+      title: L.t('${app.name} kaldırılsın mı?', 'Uninstall ${app.name}?'),
+      message: L.t(
+        'Programın kendi kaldırıcısı açılacak. Onun adımlarını tamamlayın; Windows izin isteyebilir.',
+        'The program’s own uninstaller will open. Follow its steps; Windows may ask for permission.',
+      ),
+      action: L.t('Kaldır', 'Uninstall'),
     );
     if (!ok || !mounted) return;
     final outcome = await state.uninstall(app);
@@ -69,29 +72,31 @@ class _AppsScreenState extends State<AppsScreen> {
       return;
     }
     if (!outcome.removed) {
-      messenger.showSnackBar(const SnackBar(
-        content: Text('Program hâlâ listede. Kaldırıcı penceresi açıksa bitirdikten sonra Yenile’ye basın.'),
+      messenger.showSnackBar(SnackBar(
+        content: Text(L.t('Program hâlâ listede. Kaldırıcı penceresi açıksa bitirdikten sonra Yenile’ye basın.', 'The program is still listed. If the uninstaller is open, finish it and then press Refresh.')),
       ));
       return;
     }
-    messenger.showSnackBar(SnackBar(content: Text('${app.name} kaldırıldı.')));
+    messenger.showSnackBar(SnackBar(content: Text(L.t('${app.name} kaldırıldı.', '${app.name} was uninstalled.'))));
 
     final leftover = outcome.leftoverFolder;
     if (leftover == null || !mounted) return;
     final clean = await confirm(
       context,
-      title: 'Kalan klasör bulundu',
-      message: 'Program kaldırıldı ama klasörü yerinde kalmış:\n\n$leftover\n\n'
-          'Geri Dönüşüm Kutusu’na taşınsın mı? Gerekirse oradan geri alabilirsiniz.',
-      action: 'Taşı',
+      title: L.t('Kalan klasör bulundu', 'Leftover folder found'),
+      message: L.t(
+        'Program kaldırıldı ama klasörü yerinde kalmış:\n\n$leftover\n\nGeri Dönüşüm Kutusu’na taşınsın mı? Gerekirse oradan geri alabilirsiniz.',
+        'The program was removed but its folder is still there:\n\n$leftover\n\nMove it to the Recycle Bin? You can restore it from there if needed.',
+      ),
+      action: L.t('Taşı', 'Move'),
     );
     if (!clean || !mounted) return;
     final moved = await state.recycleLeftover(leftover);
     if (!mounted) return;
     messenger.showSnackBar(SnackBar(
       content: Text(moved
-          ? 'Kalan klasör Geri Dönüşüm Kutusu’na taşındı.'
-          : 'Klasör taşınamadı. Bazı klasörler için yönetici izni gerekir.'),
+          ? L.t('Kalan klasör Geri Dönüşüm Kutusu’na taşındı.', 'The leftover folder was moved to the Recycle Bin.')
+          : L.t('Klasör taşınamadı. Bazı klasörler için yönetici izni gerekir.', 'The folder couldn’t be moved. Some folders need administrator rights.')),
     ));
   }
 
@@ -102,13 +107,13 @@ class _AppsScreenState extends State<AppsScreen> {
 
     Widget content;
     if (apps == null) {
-      content = const BusyCard(text: 'Kurulu programlar okunuyor…');
+      content = BusyCard(text: L.t('Kurulu programlar okunuyor…', 'Reading installed programs…'));
     } else if (apps.isEmpty) {
-      content = const EmptyState(icon: Icons.apps, text: 'Kurulu program bulunamadı.');
+      content = EmptyState(icon: Icons.apps, text: L.t('Kurulu program bulunamadı.', 'No installed programs found.'));
     } else {
       final visible = _visible(apps);
       content = visible.isEmpty
-          ? const EmptyState(icon: Icons.search_off, text: 'Aramayla eşleşen program yok.')
+          ? EmptyState(icon: Icons.search_off, text: L.t('Aramayla eşleşen program yok.', 'No programs match your search.'))
           : Card(
               clipBehavior: Clip.antiAlias,
               child: Column(
@@ -130,9 +135,11 @@ class _AppsScreenState extends State<AppsScreen> {
     final total = (apps ?? []).fold<int>(0, (s, a) => s + a.sizeBytes);
 
     return ModulePage(
-      title: 'Uygulama Kaldırıcı',
-      subtitle: 'Bilgisayarınızdaki programlar. Kaldırma, programın kendi kaldırıcısıyla yapılır; '
-          'ardından kalan klasör varsa onu da temizlemeyi önerir.',
+      title: L.t('Uygulama Kaldırıcı', 'Uninstaller'),
+      subtitle: L.t(
+        'Bilgisayarınızdaki programlar. Kaldırma, programın kendi kaldırıcısıyla yapılır; ardından kalan klasör varsa onu da temizlemeyi önerir.',
+        'The programs on your computer. Each is removed with its own uninstaller; afterwards, any leftover folder can be cleaned up too.',
+      ),
       children: [
         if (state.service.isSample) const SampleBanner(),
         Wrap(
@@ -146,7 +153,7 @@ class _AppsScreenState extends State<AppsScreen> {
                 controller: _search,
                 onChanged: (_) => setState(() {}),
                 decoration: InputDecoration(
-                  hintText: 'Program ara',
+                  hintText: L.t('Program ara', 'Search programs'),
                   prefixIcon: const Icon(Icons.search),
                   isDense: true,
                   filled: true,
@@ -156,10 +163,10 @@ class _AppsScreenState extends State<AppsScreen> {
               ),
             ),
             SegmentedButton<_AppSort>(
-              segments: const [
-                ButtonSegment(value: _AppSort.size, label: Text('Boyut')),
-                ButtonSegment(value: _AppSort.name, label: Text('Ad')),
-                ButtonSegment(value: _AppSort.date, label: Text('En eski')),
+              segments: [
+                ButtonSegment(value: _AppSort.size, label: Text(L.t('Boyut', 'Size'))),
+                ButtonSegment(value: _AppSort.name, label: Text(L.t('Ad', 'Name'))),
+                ButtonSegment(value: _AppSort.date, label: Text(L.t('En eski', 'Oldest'))),
               ],
               selected: {_sort},
               showSelectedIcon: false,
@@ -168,13 +175,14 @@ class _AppsScreenState extends State<AppsScreen> {
             OutlinedButton.icon(
               onPressed: state.appsBusy ? null : state.loadApps,
               icon: const Icon(Icons.refresh, size: 18),
-              label: const Text('Yenile'),
+              label: Text(L.t('Yenile', 'Refresh')),
             ),
           ],
         ),
         if (apps != null && apps.isNotEmpty)
           Text(
-            '${apps.length} program${total > 0 ? ' · bildirilen toplam boyut ${formatBytes(total)}' : ''}',
+            L.t('${apps.length} program', '${apps.length} programs') +
+                (total > 0 ? L.t(' · bildirilen toplam boyut ${formatBytes(total)}', ' · reported total size ${formatBytes(total)}') : ''),
             style: const TextStyle(fontWeight: FontWeight.w600),
           ),
         content,
@@ -195,8 +203,8 @@ class _AppRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final details = [
       if (app.publisher.isNotEmpty) app.publisher,
-      if (app.version.isNotEmpty) 'Sürüm ${app.version}',
-      if (app.installDate != null) 'Kuruldu: ${formatTime(app.installDate!).split(' ').first}',
+      if (app.version.isNotEmpty) L.t('Sürüm ${app.version}', 'Version ${app.version}'),
+      if (app.installDate != null) L.t('Kuruldu: ${formatDate(app.installDate!)}', 'Installed: ${formatDate(app.installDate!)}'),
     ].join(' · ');
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 16, 12),
@@ -226,7 +234,7 @@ class _AppRow extends StatelessWidget {
           const SizedBox(width: 12),
           busy
               ? const SizedBox(width: 92, child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))))
-              : OutlinedButton(onPressed: enabled ? onUninstall : null, child: const Text('Kaldır')),
+              : OutlinedButton(onPressed: enabled ? onUninstall : null, child: Text(L.t('Kaldır', 'Uninstall'))),
         ],
       ),
     );

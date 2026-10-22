@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import '../core/i18n.dart';
 import '../models/models.dart';
 import 'cleaner_service.dart';
 import 'fs_utils.dart';
@@ -33,7 +34,7 @@ class WindowsCleaner implements CleanerService {
   bool get supportsStartup => true;
 
   @override
-  String get deleteDestination => 'Geri Dönüşüm Kutusu’na taşınacak';
+  String get deleteDestination => L.t('Geri Dönüşüm Kutusu’na taşınacak', 'will be moved to the Recycle Bin');
 
   @override
   String? get settingsPath => _roaming.isEmpty ? null : _join(_roaming, r'HarrierCleaner\settings.json');
@@ -111,7 +112,7 @@ class WindowsCleaner implements CleanerService {
     final used = int.tryParse(parts[0].trim());
     final free = int.tryParse(parts[1].trim());
     if (used == null || free == null) return null;
-    return StorageInfo(total: used + free, free: free, label: '$_systemDrive sürücüsü dolu');
+    return StorageInfo(total: used + free, free: free, label: L.t('$_systemDrive sürücüsü dolu', '$_systemDrive drive used'));
   }
 
   // ---- Gereksiz dosyalar ----
@@ -151,66 +152,66 @@ class WindowsCleaner implements CleanerService {
     final hasLocal = _local.isNotEmpty;
     return [
       if (_temp.isNotEmpty)
-        JunkCategory(id: 'temp', name: 'Geçici dosyalar', description: 'Kullanıcı geçici klasörü (%TEMP%)', paths: [_temp]),
+        JunkCategory(id: 'temp', name: L.t('Geçici dosyalar', 'Temporary files'), description: L.t('Kullanıcı geçici klasörü (%TEMP%)', 'User temp folder (%TEMP%)'), paths: [_temp]),
       JunkCategory(
         id: 'wintemp',
-        name: 'Windows geçici dosyaları',
-        description: r'Windows\Temp klasörü',
+        name: L.t('Windows geçici dosyaları', 'Windows temporary files'),
+        description: L.t(r'Windows\Temp klasörü', r'Windows\Temp folder'),
         paths: [_join(_winDir, 'Temp')],
         requiresAdmin: true,
       ),
       if (hasLocal)
         JunkCategory(
           id: 'chrome',
-          name: 'Chrome önbelleği',
-          description: 'Tüm Chrome profillerinin önbelleği',
+          name: L.t('Chrome önbelleği', 'Chrome cache'),
+          description: L.t('Tüm Chrome profillerinin önbelleği', 'Cache of all Chrome profiles'),
           paths: _chromiumCaches(_join(_local, r'Google\Chrome\User Data')),
           processName: 'chrome.exe',
         ),
       if (hasLocal)
         JunkCategory(
           id: 'edge',
-          name: 'Edge önbelleği',
-          description: 'Tüm Edge profillerinin önbelleği',
+          name: L.t('Edge önbelleği', 'Edge cache'),
+          description: L.t('Tüm Edge profillerinin önbelleği', 'Cache of all Edge profiles'),
           paths: _chromiumCaches(_join(_local, r'Microsoft\Edge\User Data')),
           processName: 'msedge.exe',
         ),
       if (hasLocal)
         JunkCategory(
           id: 'firefox',
-          name: 'Firefox önbelleği',
-          description: 'Tüm Firefox profillerinin önbelleği',
+          name: L.t('Firefox önbelleği', 'Firefox cache'),
+          description: L.t('Tüm Firefox profillerinin önbelleği', 'Cache of all Firefox profiles'),
           paths: _firefoxCaches(),
           processName: 'firefox.exe',
         ),
       if (hasLocal)
         JunkCategory(
           id: 'thumbs',
-          name: 'Küçük resim önbelleği',
-          description: 'Gezgin önizleme önbelleği (bir kısmı kullanımda olabilir)',
+          name: L.t('Küçük resim önbelleği', 'Thumbnail cache'),
+          description: L.t('Gezgin önizleme önbelleği (bir kısmı kullanımda olabilir)', 'File Explorer preview cache (some may be in use)'),
           paths: [_join(_local, r'Microsoft\Windows\Explorer')],
           filePrefix: 'thumbcache_',
         ),
       if (hasLocal)
         JunkCategory(
           id: 'crash',
-          name: 'Hata raporları',
-          description: 'Çökme dökümleri ve Windows hata raporları',
+          name: L.t('Hata raporları', 'Error reports'),
+          description: L.t('Çökme dökümleri ve Windows hata raporları', 'Crash dumps and Windows error reports'),
           paths: [_join(_local, 'CrashDumps'), _join(_local, r'Microsoft\Windows\WER')],
         ),
       JunkCategory(
         id: 'update',
-        name: 'Windows Update artıkları',
-        description: r'İndirilmiş güncelleme dosyaları (SoftwareDistribution\Download)',
+        name: L.t('Windows Update artıkları', 'Windows Update leftovers'),
+        description: L.t(r'İndirilmiş güncelleme dosyaları (SoftwareDistribution\Download)', r'Downloaded update files (SoftwareDistribution\Download)'),
         paths: [_join(_winDir, r'SoftwareDistribution\Download')],
         requiresAdmin: true,
       ),
       JunkCategory(
         id: 'recycle',
-        name: 'Geri Dönüşüm Kutusu',
-        description: 'Silinmiş ama boşaltılmamış dosyalar',
+        name: L.t('Geri Dönüşüm Kutusu', 'Recycle Bin'),
+        description: L.t('Silinmiş ama boşaltılmamış dosyalar', 'Deleted files that haven’t been emptied'),
         kind: JunkKind.recycleBin,
-        warning: 'Boşaltılınca geri alınamaz',
+        warning: L.t('Boşaltılınca geri alınamaz', 'Can’t be undone once emptied'),
         selected: false,
       ),
     ];
@@ -259,10 +260,10 @@ class WindowsCleaner implements CleanerService {
       if (proc != null && running.contains('"$proc"')) {
         c.blocked = true;
         c.selected = false;
-        c.warning = 'Tarayıcı açık, temizlemek için kapatın';
+        c.warning = L.t('Tarayıcı açık, temizlemek için kapatın', 'Browser is open, close it to clean');
       } else if (c.requiresAdmin && !admin) {
         c.selected = false;
-        c.warning = 'Tamamı için yönetici olarak çalıştırın';
+        c.warning = L.t('Tamamı için yönetici olarak çalıştırın', 'Run as administrator to clean all of it');
       }
       if (c.sizeBytes == 0) c.selected = false;
       result.add(c);
@@ -412,7 +413,7 @@ ConvertTo-Json -InputObject @($out) -Compress -Depth 3
   /// programın kaydını silmez, bu yüzden her zaman geri alınabilir.
   @override
   Future<String?> setStartupEnabled(StartupItem item, bool enabled) async {
-    if (item.approvedKey.isEmpty) return 'Bu girdi değiştirilemiyor.';
+    if (item.approvedKey.isEmpty) return L.t('Bu girdi değiştirilemiyor.', 'This entry can’t be changed.');
     final bytes = enabled
         ? '[byte[]](2,0,0,0,0,0,0,0,0,0,0,0)'
         : r'[byte[]](@(3,0,0,0) + [BitConverter]::GetBytes((Get-Date).ToFileTime()))';
@@ -424,9 +425,9 @@ ConvertTo-Json -InputObject @($out) -Compress -Depth 3
     );
     if (out == 'ok') return null;
     if (item.scope == StartupScope.machine && !(await isAdmin())) {
-      return 'Bu program tüm kullanıcılar için kayıtlı. Değiştirmek için uygulamayı yönetici olarak çalıştırın.';
+      return L.t('Bu program tüm kullanıcılar için kayıtlı. Değiştirmek için uygulamayı yönetici olarak çalıştırın.', 'This app is registered for all users. Run the app as administrator to change it.');
     }
-    return 'Değişiklik kaydedilemedi.';
+    return L.t('Değişiklik kaydedilemedi.', 'The change couldn’t be saved.');
   }
 
   @override
@@ -518,7 +519,7 @@ ConvertTo-Json -InputObject @($out) -Compress -Depth 3
     var (file, args) = _splitCommand(app.uninstallCommand);
     // "%ProgramFiles%" gibi ortam değişkenlerini aç.
     file = file.replaceAllMapped(RegExp(r'%([^%]+)%'), (m) => _env[m[1]!] ?? m[0]!);
-    if (file.isEmpty) return 'Bu programın kaldırma komutu bulunamadı.';
+    if (file.isEmpty) return L.t('Bu programın kaldırma komutu bulunamadı.', 'This program’s uninstall command wasn’t found.');
     // MSI programlarında "/I" değiştir/onar demek; kaldırmak için "/X" olmalı.
     if (file.toLowerCase().contains('msiexec')) {
       args = args.replaceAllMapped(RegExp(r'/I\s*\{', caseSensitive: false), (_) => '/X{');
@@ -528,7 +529,7 @@ ConvertTo-Json -InputObject @($out) -Compress -Depth 3
       r'if ($env:HC_ARGS) { $a.ArgumentList = $env:HC_ARGS }; Start-Process @a; "ok" } catch { "iptal" }',
       env: {'HC_FILE': file, 'HC_ARGS': args},
     );
-    return out == 'ok' ? null : 'Kaldırıcı başlatılamadı ya da izin penceresinde vazgeçildi.';
+    return out == 'ok' ? null : L.t('Kaldırıcı başlatılamadı ya da izin penceresinde vazgeçildi.', 'The uninstaller couldn’t start, or it was cancelled at the permission prompt.');
   }
 
   String _norm(String p) => p.trim().replaceAll(RegExp(r'[\\/]+$'), '').toLowerCase();
