@@ -25,6 +25,9 @@ class SampleCleaner implements CleanerService {
   @override
   String? get settingsPath => null;
 
+  @override
+  String? get legacySettingsPath => null;
+
   /// İlerleme çubuğunu denemek için yapay bekleme. İptal edilirse false döner.
   Future<bool> _simulate(String phase, ProgressReporter? onProgress, CancelToken? token) async {
     for (var i = 1; i <= 12; i++) {

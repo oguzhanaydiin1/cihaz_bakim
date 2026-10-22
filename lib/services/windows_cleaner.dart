@@ -34,7 +34,10 @@ class WindowsCleaner implements CleanerService {
   String get deleteDestination => 'Geri Dönüşüm Kutusu’na taşınacak';
 
   @override
-  String? get settingsPath => _roaming.isEmpty ? null : _join(_roaming, r'CihazBakim\ayarlar.json');
+  String? get settingsPath => _roaming.isEmpty ? null : _join(_roaming, r'HarrierCleaner\settings.json');
+
+  @override
+  String? get legacySettingsPath => _roaming.isEmpty ? null : _join(_roaming, r'CihazBakim\ayarlar.json');
 
   // ---- PowerShell yardımcıları ----
 
@@ -308,7 +311,7 @@ class WindowsCleaner implements CleanerService {
   @override
   Future<int> deleteFiles(List<String> paths) async {
     if (paths.isEmpty) return 0;
-    final list = File(_join(Directory.systemTemp.path, 'cihaz_bakim_silinecek.txt'));
+    final list = File(_join(Directory.systemTemp.path, 'harrier_cleaner_silinecek.txt'));
     await list.writeAsString(paths.join('\r\n'), encoding: utf8);
     final out = await _ps(
       r'Add-Type -AssemblyName Microsoft.VisualBasic; $n = 0; '

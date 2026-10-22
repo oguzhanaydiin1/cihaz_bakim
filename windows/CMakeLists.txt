@@ -4,7 +4,7 @@ project(cihaz_bakim LANGUAGES CXX)
 
 # The name of the executable created for the application. Change this to change
 # the on-disk name of your application.
-set(BINARY_NAME "cihaz_bakim")
+set(BINARY_NAME "harrier_cleaner")
 
 # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
 # versions of CMake.

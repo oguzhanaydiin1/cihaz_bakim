@@ -93,7 +93,7 @@ class Sidebar extends StatelessWidget {
             SizedBox(width: 10),
             Expanded(
               child: Text(
-                '[Uygulama Adı]',
+                'Harrier Cleaner',
                 style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800),
               ),
             ),

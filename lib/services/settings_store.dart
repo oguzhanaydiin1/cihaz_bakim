@@ -6,15 +6,22 @@ import '../models/models.dart';
 /// Ayarları ve geçmişi bir JSON dosyasında saklar.
 /// [path] null ise (ör. Android örnek modu) yalnızca bellekte tutulur.
 class SettingsStore {
-  SettingsStore(this.path);
+  SettingsStore(this.path, {this.legacyPath});
 
   final String? path;
+
+  /// Eski sürümün ayar dosyası (ör. isim değişmeden önceki klasör).
+  final String? legacyPath;
 
   Future<AppSettings> load() async {
     final p = path;
     if (p == null) return AppSettings();
     try {
-      final file = File(p);
+      var file = File(p);
+      final legacy = legacyPath;
+      if (!await file.exists() && legacy != null && await File(legacy).exists()) {
+        file = File(legacy); // geçmiş kaybolmasın: eski dosyadan oku, ilk kayıtta yeni yere yazılır
+      }
       if (!await file.exists()) return AppSettings();
       final data = jsonDecode(await file.readAsString());
       if (data is Map<String, dynamic>) return AppSettings.fromJson(data);

@@ -20,7 +20,7 @@ class CihazBakimApp extends StatelessWidget {
     return AppScope(
       state: state,
       child: MaterialApp(
-        title: '[Uygulama Adı]',
+        title: 'Harrier Cleaner',
         debugShowCheckedModeBanner: false,
         theme: buildTheme(),
         home: const Shell(),

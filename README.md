@@ -1,4 +1,4 @@
-# Cihaz Bakım Uygulaması (çalışma adı)
+# Harrier Cleaner
 
 Windows ve Android için tek kod tabanlı Flutter uygulaması. Bu ilk sürümde çalışan modüller:
 
@@ -15,7 +15,7 @@ Tüm uzun taramalar canlı dosya sayacı gösterir ve iptal edilebilir.
 
 Diğer modüller menüde sürüm etiketiyle (v2, v3) görünür ve planlanan özellikleri listeler.
 
-Ayarlar ve geçmiş `%APPDATA%\CihazBakim\ayarlar.json` dosyasında saklanır.
+Ayarlar ve geçmiş `%APPDATA%\HarrierCleaner\settings.json` dosyasında saklanır.
 
 ## Güncelleme (önceki sürümden)
 

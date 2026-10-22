@@ -9,7 +9,7 @@ import '../services/settings_store.dart';
 /// Uygulamanın tüm durumu. Ekranlar AppScope.of(context) ile erişir.
 class AppState extends ChangeNotifier {
   AppState(this.service)
-      : store = SettingsStore(service.settingsPath),
+      : store = SettingsStore(service.settingsPath, legacyPath: service.legacySettingsPath),
         knownRoots = service.defaultUserFolders().toList(),
         dupeRoots = service.defaultUserFolders().toList(),
         usageRoot = service.defaultUsageRoot();

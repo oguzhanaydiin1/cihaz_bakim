@@ -24,6 +24,9 @@ abstract class CleanerService {
   /// Ayar dosyasının yolu. null ise ayarlar kaydedilmez.
   String? get settingsPath;
 
+  /// Eski sürümün ayar dosyası. Yeni dosya yoksa ayarlar buradan taşınır.
+  String? get legacySettingsPath;
+
   Future<StorageInfo?> storageInfo();
 
   Future<bool> isAdmin();
