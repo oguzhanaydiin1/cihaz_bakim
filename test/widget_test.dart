@@ -35,4 +35,13 @@ void main() {
     await tester.pumpWidget(CihazBakimApp(state: state));
     expect(find.text('Akıllı Tarama'), findsWidgets);
   });
+
+  testWidgets('İngilizce arayüz', (tester) async {
+    L.apply(AppLanguage.en);
+    final state = AppState(SampleCleaner());
+    await tester.pumpWidget(CihazBakimApp(state: state));
+    expect(find.text('Smart Scan'), findsWidgets);
+    expect(find.text('Akıllı Tarama'), findsNothing);
+    L.apply(AppLanguage.tr);
+  });
 }

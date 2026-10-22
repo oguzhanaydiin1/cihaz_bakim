@@ -149,7 +149,7 @@ class MediaScreen extends StatelessWidget {
               onChanged: (v) => state.selectAllPhotos(v ?? false),
               controlAffinity: ListTileControlAffinity.leading,
               title: Text(
-                L.t('${formatCount(photos.length)} fotoğraf', '${formatCount(photos.length)} photos') + ' · ${formatBytes(photos.fold<int>(0, (s, p) => s + p.sizeBytes))}',
+                '${L.t('${formatCount(photos.length)} fotoğraf', '${formatCount(photos.length)} photos')} · ${formatBytes(photos.fold<int>(0, (s, p) => s + p.sizeBytes))}',
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
             ),
