@@ -21,7 +21,10 @@ class MediaScreen extends StatelessWidget {
       context,
       title: L.t('${selected.length} fotoğraf küçültülsün mü?', 'Compress ${selected.length} photos?'),
       message: L.t('Toplam ${formatBytes(total)}. ', 'Total ${formatBytes(total)}. ') +
-          (o.backup
+          (o.backup && !state.service.isDesktop && !state.service.isSample
+              ? L.t('Fotoğraflar galerideki yerinde küçültülecek. Orijinaller “Harrier Cleaner Yedek” albümüne kopyalanacak; yer, albümü silince açılır. Android değiştirme izni isteyecek.',
+                  'Photos will be compressed where they are in your gallery. Originals will be copied to the “Harrier Cleaner Yedek” album; the space is freed when you delete it. Android will ask for permission.')
+              : o.backup
               ? L.t('Orijinaller Geri Dönüşüm Kutusu’na taşınacak; yer, kutu boşaltılınca açılır.',
                   'The originals will be moved to the Recycle Bin; the space is freed when you empty it.')
               : L.t('Orijinaller kalıcı olarak değiştirilecek, geri alınamaz.', 'The originals will be replaced permanently. This can’t be undone.')),
@@ -93,16 +96,6 @@ class MediaScreen extends StatelessWidget {
                       ),
             ),
             const SizedBox(height: 8),
-            if (!state.service.isDesktop && !state.service.isSample)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                child: Text(
-                  L.t('Orijinaller telefonun çöp kutusuna taşınır; 30 gün içinde geri alabilirsiniz.',
-                      'Originals are moved to your phone’s trash; you can restore them within 30 days.'),
-                  style: const TextStyle(fontSize: 13, color: AppColors.muted, height: 1.4),
-                ),
-              )
-            else
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               value: o.backup,
@@ -111,9 +104,17 @@ class MediaScreen extends StatelessWidget {
                   : (v) => state.setCompressOptions(
                         CompressOptions(quality: o.quality, maxDimension: o.maxDimension, backup: v),
                       ),
-              title: Text(L.t('Orijinalleri Geri Dönüşüm Kutusu’na yedekle', 'Back up originals to the Recycle Bin'), style: const TextStyle(fontSize: 14)),
+              title: Text(
+                state.service.isDesktop || state.service.isSample
+                    ? L.t('Orijinalleri Geri Dönüşüm Kutusu’na yedekle', 'Back up originals to the Recycle Bin')
+                    : L.t('Orijinalleri “Harrier Cleaner Yedek” albümüne yedekle', 'Back up originals to the “Harrier Cleaner Yedek” album'),
+                style: const TextStyle(fontSize: 14),
+              ),
               subtitle: Text(
-                L.t('Önerilir. Sonuçtan memnunsanız kutuyu boşaltınca yer açılır.', 'Recommended. If you’re happy with the result, empty the bin to free the space.'),
+                state.service.isDesktop || state.service.isSample
+                    ? L.t('Önerilir. Sonuçtan memnunsanız kutuyu boşaltınca yer açılır.', 'Recommended. If you’re happy with the result, empty the bin to free the space.')
+                    : L.t('Önerilir. Fotoğraflar galerideki yerinde küçültülür; sonuçtan memnunsanız yedek albümünü silince yer açılır.',
+                        'Recommended. Photos are compressed where they are in your gallery; if you’re happy, delete the backup album to free the space.'),
                 style: TextStyle(fontSize: 12),
               ),
             ),

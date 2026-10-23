@@ -113,6 +113,21 @@ class MainActivity : FlutterActivity() {
                     (call.argument<Number>("dateTaken") ?: 0).toLong(),
                 )
             }
+            "backupCopy" -> background(result) {
+                backupCopy(Uri.parse(call.argument<String>("uri")!!), call.argument<String>("name") ?: "photo.jpg")
+            }
+            "overwrite" -> background(result) {
+                overwrite(Uri.parse(call.argument<String>("uri")!!), call.argument<String>("src")!!)
+            }
+            "deleteOwn" -> background(result) {
+                (call.argument<List<String>>("uris") ?: emptyList()).sumOf {
+                    try {
+                        contentResolver.delete(Uri.parse(it), null, null)
+                    } catch (e: Exception) {
+                        0
+                    }
+                }
+            }
             "request" -> mediaRequest(call.argument<String>("type") ?: "delete", call.argument<List<String>>("uris") ?: emptyList(), result)
             "battery" -> result.success(battery())
             "system" -> result.success(system())
@@ -285,6 +300,43 @@ class MainActivity : FlutterActivity() {
         val file = File(dir, "${System.nanoTime()}_$safe")
         contentResolver.openInputStream(uri)?.use { input -> file.outputStream().use { input.copyTo(it) } } ?: return null
         return file.absolutePath
+    }
+
+    /**
+     * Orijinal fotoğrafın birebir kopyasını "Pictures/Harrier Cleaner Yedek/" albümüne kaydeder.
+     * Kopyanın sahibi bu uygulamadır; kullanıcı albümü silince yer açılır. Başarısızsa null.
+     */
+    private fun backupCopy(source: Uri, name: String): String? {
+        val values = ContentValues().apply {
+            put(MediaStore.MediaColumns.DISPLAY_NAME, name)
+            put(MediaStore.MediaColumns.MIME_TYPE, contentResolver.getType(source) ?: "image/jpeg")
+            put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/Harrier Cleaner Yedek/")
+            put(MediaStore.MediaColumns.IS_PENDING, 1)
+        }
+        val target = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+        val uri = contentResolver.insert(target, values) ?: return null
+        try {
+            val copied = contentResolver.openInputStream(source)?.use { input ->
+                contentResolver.openOutputStream(uri, "w")?.use { input.copyTo(it) }
+            } ?: throw IllegalStateException("kopyalanamadı")
+            if (copied <= 0) throw IllegalStateException("boş kopya")
+            contentResolver.update(uri, ContentValues().apply { put(MediaStore.MediaColumns.IS_PENDING, 0) }, null, null)
+        } catch (e: Exception) {
+            contentResolver.delete(uri, null, null)
+            return null
+        }
+        return uri.toString()
+    }
+
+    /**
+     * Fotoğrafın içeriğini olduğu yerde değiştirir: adı, klasörü ve galerideki yeri aynı kalır.
+     * Android 11+ için önce "write" onayı alınmış olmalıdır.
+     */
+    private fun overwrite(uri: Uri, src: String): Boolean {
+        val file = File(src)
+        if (!file.exists() || file.length() == 0L) return false
+        contentResolver.openOutputStream(uri, "wt")?.use { out -> file.inputStream().use { it.copyTo(out) } } ?: return false
+        return true
     }
 
     /** Küçültülmüş fotoğrafı orijinalin klasörüne, aynı adla ve çekim tarihiyle ekler. */

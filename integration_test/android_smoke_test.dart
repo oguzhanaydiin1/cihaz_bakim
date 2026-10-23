@@ -89,9 +89,13 @@ void main() {
     expect(r.compressed, 1);
     expect(r.savedBytes, greaterThan(0));
     final all = await c.findPhotos('', minSize: 1);
-    final small = all!.where((p) => p.path.endsWith('hc_big.jpg')).toList();
-    expect(small.length, 1, reason: 'küçültülmüş hâli aynı adla yerinde olmalı: ${all.map((p) => p.path).toList()}');
-    expect(small.single.sizeBytes, lessThan(big.sizeBytes));
+    final names = all!.map((p) => '${p.path} ${p.sizeBytes}').toList();
+    final inPlace = all.where((p) => p.path == big.path).toList();
+    expect(inPlace.length, 1, reason: 'küçültülmüş hâli aynı adla yerinde olmalı: $names');
+    expect(inPlace.single.sizeBytes, lessThan(big.sizeBytes), reason: '$names');
+    final backup = all.where((p) => p.path == 'Pictures/Harrier Cleaner Yedek/hc_big.jpg').toList();
+    expect(backup.length, 1, reason: 'orijinal yedek albümünde olmalı: $names');
+    expect(backup.single.sizeBytes, big.sizeBytes, reason: 'yedek orijinalle aynı boyutta olmalı');
 
     final dups = await c.findDuplicates(['images'], minSize: 1);
     final b = dups!.expand((g) => g.files).where((f) => f.path.endsWith('hc_b.jpg')).toList();

@@ -195,10 +195,10 @@ class SupportScreen extends StatelessWidget {
                 _Faq(
                   L.t('Sildiğim dosyalar nereye gidiyor?', 'Where do deleted files go?'),
                   L.t(
-                    'Kopyalar ve küçültülen fotoğrafların orijinalleri telefonun çöp kutusuna taşınır; 30 gün içinde geri alabilirsin. '
-                        'Gereksiz dosyalar kalıcı silinir. Her iki durumda da Android önce onay ister.',
-                    'Duplicates and the originals of compressed photos go to your phone’s trash, where you can restore them for 30 days. '
-                        'Junk files are deleted permanently. Either way, Android asks you first.',
+                    'Kopyalar telefonun çöp kutusuna taşınır; 30 gün içinde geri alabilirsin. Küçültülen fotoğraflar galerideki yerinde kalır; '
+                        'orijinalleri “Harrier Cleaner Yedek” albümüne kopyalanır. Gereksiz dosyalar kalıcı silinir. Her durumda Android önce onay ister.',
+                    'Duplicates go to your phone’s trash, where you can restore them for 30 days. Compressed photos stay where they are in your gallery; '
+                        'their originals are copied to the “Harrier Cleaner Yedek” album. Junk files are deleted permanently. Android always asks you first.',
                   ),
                 ),
               ] else

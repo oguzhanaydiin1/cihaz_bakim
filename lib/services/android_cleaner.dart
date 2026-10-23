@@ -434,8 +434,9 @@ class AndroidCleaner extends CleanerService {
     return [for (final m in items) PhotoFile(path: m.path, sizeBytes: m.size)]..sort((a, b) => b.sizeBytes.compareTo(a.sizeBytes));
   }
 
-  /// Android'de orijinaller her zaman çöp kutusuna taşınır (30 gün geri alınabilir), küçültülmüş
-  /// hâli aynı klasöre aynı adla eklenir. (Android 10'da çöp kutusu yoktur; orijinal silinir.)
+  /// Fotoğraf olduğu yerde küçültülür: adı, klasörü ve galerideki yeri değişmez (Android bir kez
+  /// "değiştirilsin mi" diye sorar). [CompressOptions.backup] açıksa orijinal önce
+  /// "Pictures/Harrier Cleaner Yedek" albümüne kopyalanır; yedeği alınamayan fotoğrafa dokunulmaz.
   @override
   Future<CompressResult?> compressPhotos(
     List<String> paths,
@@ -462,7 +463,7 @@ class AndroidCleaner extends CleanerService {
         }
       }
 
-      // 2. Küçült (ayrı iş parçacığında, ortak kodla)
+      // 2. Küçült (ayrı iş parçacığında, ortak kodla); orijinallere henüz dokunulmaz
       final r = await compressToTemp(cacheToMedia.keys.toList(), options.quality, options.maxDimension,
           onProgress: onProgress, token: token);
       if (r == null) return null;
@@ -472,33 +473,34 @@ class AndroidCleaner extends CleanerService {
         return CompressResult(compressed: 0, skipped: skipped, failed: failed, savedBytes: 0, donePaths: const []);
       }
 
-      // 3. Orijinalleri çöp kutusuna taşımak için onay
+      // 3. Değiştirme onayı (tek pencere)
       onProgress?.call(ScanProgress(phase: L.t('Onay bekleniyor', 'Waiting for confirmation')));
-      final originals = [for (final it in items) cacheToMedia[it.$1]!];
-      if (!await _request('trash', [for (final m in originals) m.uri])) {
+      if (!await _request('write', [for (final it in items) cacheToMedia[it.$1]!.uri])) {
         return CompressResult(compressed: 0, skipped: skipped, failed: failed, savedBytes: 0, donePaths: const []);
       }
 
-      // 4. Küçültülmüş hâlleri aynı yere, aynı adla ekle
+      // 4. Her fotoğraf için: (isteğe bağlı) yedek, sonra olduğu yerde küçültülmüş hâli yaz
       var saved = 0;
       final done = <String>[];
       for (var i = 0; i < items.length; i++) {
         final (cache, temp, oldSize, newSize, _) = items[i];
         final m = cacheToMedia[cache]!;
         onProgress?.call(ScanProgress(phase: L.t('Kaydediliyor', 'Saving'), files: i, total: items.length, bytes: saved, current: m.dir));
-        final uri = await _ch.invokeMethod<String>('insertImage', {
-          'src': temp,
-          'name': m.name,
-          'relativePath': m.dir,
-          'dateTaken': m.taken > 0 ? m.taken : m.modified,
-        });
-        if (uri == null) {
-          failed++;
+        String? backup;
+        if (options.backup) {
+          backup = await _ch.invokeMethod<String>('backupCopy', {'uri': m.uri, 'name': m.name});
+          if (backup == null) {
+            failed++; // yedek alınamadıysa orijinale dokunma
+            continue;
+          }
+        }
+        final ok = await _ch.invokeMethod<bool>('overwrite', {'uri': m.uri, 'src': temp}) ?? false;
+        if (!ok) {
+          failed++; // yazma yarıda kaldıysa yedek tek sağlam kopya olabilir: silinmez
           continue;
         }
         saved += oldSize - newSize;
         done.add(m.path);
-        _media.remove(m.path);
       }
       return CompressResult(compressed: done.length, skipped: skipped, failed: failed, savedBytes: saved, donePaths: done);
     } finally {
