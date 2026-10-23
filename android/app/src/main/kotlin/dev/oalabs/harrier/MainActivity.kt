@@ -336,7 +336,27 @@ class MainActivity : FlutterActivity() {
         val file = File(src)
         if (!file.exists() || file.length() == 0L) return false
         contentResolver.openOutputStream(uri, "wt")?.use { out -> file.inputStream().use { it.copyTo(out) } } ?: return false
+        rescan(uri)
         return true
+    }
+
+    /**
+     * Medya kütüphanesinin dosyayı yeniden okumasını sağlar (yeni boyut, ölçü vb.).
+     * Android 11+ bunu yazma bitince kendisi yapar; Android 10 yapmaz. Tarama bitene kadar
+     * (en fazla 10 sn) bekler; arka plan iş parçacığında çağrılmalıdır.
+     */
+    private fun rescan(uri: Uri) {
+        val path = try {
+            @Suppress("DEPRECATION")
+            contentResolver.query(uri, arrayOf(MediaStore.MediaColumns.DATA), null, null, null)?.use { c ->
+                if (c.moveToFirst()) c.getString(0) else null
+            }
+        } catch (e: Exception) {
+            null
+        } ?: return
+        val done = java.util.concurrent.CountDownLatch(1)
+        android.media.MediaScannerConnection.scanFile(this, arrayOf(path), null) { _, _ -> done.countDown() }
+        done.await(10, java.util.concurrent.TimeUnit.SECONDS)
     }
 
     /** Küçültülmüş fotoğrafı orijinalin klasörüne, aynı adla ve çekim tarihiyle ekler. */
