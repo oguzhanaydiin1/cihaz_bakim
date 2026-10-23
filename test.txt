@@ -1,0 +1,11 @@
+
+Running Gradle task 'assembleDebug'...                             22.2s
+✓ Built build/app/outputs/flutter-apk/app-debug.apk
+Installing build/app/outputs/flutter-apk/app-debug.apk...        1,132ms
+::group::✅ Passing tests
+✅ cihaz bilgileri okunuyor
+✅ medya izni, kopyalar, konum ve disk haritası
+✅ yazma: konum silme, küçültme, kopyayı silme (Android 10)
+::endgroup::
+
+🎉 3 tests passed.
