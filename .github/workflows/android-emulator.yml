@@ -1,0 +1,72 @@
+# Android emülatöründe entegrasyon testi (integration_test/android_smoke_test.dart).
+# Android 10 (API 29): onay penceresi çıkmadığı için yazma işlemleri de denenir.
+# Android 14 (API 34): okuma işlemleri (izin, kopya, konum, disk haritası, cihaz bilgileri).
+# Sonuçlar "android-emu-<api>" dallarına yazılır.
+name: Android emülatör testi
+
+on:
+  push:
+    branches: [main]
+    paths: ['android/**', 'lib/services/android_cleaner.dart', 'integration_test/**', '.github/workflows/android-emulator.yml', '.github/scripts/**']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-emu-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  emulator:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        api: [29, 34]
+    steps:
+      - uses: actions/checkout@v4
+      - name: KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pillow piexif
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Emülatörde test
+        id: test
+        continue-on-error: true
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api }}
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: bash .github/scripts/emulator_test.sh ${{ matrix.api }}
+      - name: Raporu yaz
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p /tmp/r
+          tail -c 30000 test.txt > /tmp/r/test.txt 2>/dev/null || echo "test.txt yok" > /tmp/r/test.txt
+          echo "test=${{ steps.test.outcome }} api=${{ matrix.api }} commit=${GITHUB_SHA} run=${GITHUB_RUN_ID}" > /tmp/r/status.txt
+          cd /tmp/r
+          git init -q && git checkout -q -b "android-emu-${{ matrix.api }}" && git add -A
+          git -c user.name=ci -c user.email=ci@localhost commit -q -m "Emülatör ${{ matrix.api }} ${GITHUB_SHA}"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" "android-emu-${{ matrix.api }}"
+      - name: Sonuç
+        if: steps.test.outcome == 'failure'
+        run: exit 1

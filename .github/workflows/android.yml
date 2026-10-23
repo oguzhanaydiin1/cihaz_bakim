@@ -42,7 +42,8 @@ jobs:
       - name: Sürüm
         id: v
         shell: bash
-        run: echo "version=$(grep '^version:' pubspec.yaml | sed 's/version: *//; s/+.*//' | tr -d '\r')" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "version=$(grep '^version:' pubspec.yaml | sed 's/version: *//; s/+.*//' | tr -d '\r')" >> "$GITHUB_OUTPUT"
 
       - name: APK derle
         id: build
