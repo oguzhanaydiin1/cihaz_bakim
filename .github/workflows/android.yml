@@ -1,0 +1,100 @@
+# Android APK'sı.
+#  - Her gönderimde derlenir; derleme çıktısının sonu "android-report" dalına yazılır.
+#  - Elle başlatılıp "Sürümü yayınla" işaretlenirse APK, Releases sayfasına "ön sürüm" (beta)
+#    olarak konur; telefondan doğrudan indirilebilir.
+#  - İmza: ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD (ve isteğe bağlı ANDROID_KEY_ALIAS)
+#    secret'ları varsa kalıcı anahtar, yoksa geçici test anahtarı kullanılır.
+name: Android
+
+on:
+  push:
+    branches: [main]
+    paths: ['lib/**', 'android/**', 'pubspec.yaml', 'assets/**', '.github/workflows/android.yml']
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'APK’yı Releases sayfasına beta olarak koy'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+
+      - name: Sürüm
+        id: v
+        shell: bash
+        run: echo "version=$(grep '^version:' pubspec.yaml | sed 's/version: *//; s/+.*//' | tr -d '\r')" >> "$GITHUB_OUTPUT"
+
+      - name: APK derle
+        id: build
+        continue-on-error: true
+        shell: bash
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          set -o pipefail
+          flutter build apk --release 2>&1 | tee build.txt
+          mkdir -p dist
+          cp build/app/outputs/flutter-apk/app-release.apk "dist/HarrierCleaner-Android-${{ steps.v.outputs.version }}.apk"
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then echo "signing=release" > signing.txt; else echo "signing=test" > signing.txt; fi
+
+      - name: Raporu android-report dalına yaz
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p /tmp/r
+          tail -c 20000 build.txt > /tmp/r/build.txt 2>/dev/null || echo "build.txt yok" > /tmp/r/build.txt
+          echo "build=${{ steps.build.outcome }} commit=${GITHUB_SHA} run=${GITHUB_RUN_ID}" > /tmp/r/status.txt
+          cat signing.txt >> /tmp/r/status.txt 2>/dev/null || true
+          if [ -f dist/*.apk ]; then
+            f=$(ls dist/*.apk); echo "apk=$(basename "$f") size=$(stat -c %s "$f") sha256=$(sha256sum "$f" | cut -d' ' -f1)" >> /tmp/r/status.txt
+          fi
+          cd /tmp/r
+          git init -q && git checkout -q -b android-report && git add -A
+          git -c user.name=ci -c user.email=ci@localhost commit -q -m "Android raporu ${GITHUB_SHA}"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" android-report
+
+      - name: Derleme başarısızsa dur
+        if: steps.build.outcome == 'failure'
+        run: exit 1
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: HarrierCleaner-Android-${{ steps.v.outputs.version }}
+          path: dist/*.apk
+
+      - name: Releases sayfasına beta olarak koy
+        if: inputs.publish
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-v${{ steps.v.outputs.version }}-beta.${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          name: Harrier Cleaner Android ${{ steps.v.outputs.version }} (beta ${{ github.run_number }})
+          prerelease: true
+          make_latest: false
+          body: |
+            Android beta sürümü. Android 10 ve üstü.
+            Telefonda indirip açın; "bilinmeyen kaynaklardan yükleme" izni istenirse verin.
+            Test anahtarıyla imzalı sürümlerde, yeni bir beta kurmadan önce eskisini kaldırın.
+          files: dist/*.apk

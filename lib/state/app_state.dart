@@ -13,7 +13,7 @@ import '../services/settings_store.dart';
 import '../services/updater.dart';
 
 /// Uygulamanın tüm durumu. Ekranlar AppScope.of(context) ile erişir.
-class AppState extends ChangeNotifier {
+class AppState extends ChangeNotifier with WidgetsBindingObserver {
   AppState(this.service)
       : store = SettingsStore(service.settingsPath, legacyPath: service.legacySettingsPath),
         knownRoots = service.defaultUserFolders().toList(),
@@ -50,6 +50,42 @@ class AppState extends ChangeNotifier {
     notifyListeners();
     storage = await service.storageInfo();
     admin = await service.isAdmin();
+    if (service.needsMediaPermission) {
+      mediaAccess = await service.mediaAccess();
+      WidgetsBinding.instance.addObserver(this);
+    }
+    notifyListeners();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Android medya izni
+  // ---------------------------------------------------------------------------
+
+  /// null = henüz bilinmiyor ya da gerekmiyor (Windows).
+  MediaAccess? mediaAccess;
+
+  /// İzin penceresini açar. Kullanıcı daha önce "Bir daha sorma" dediyse Android pencereyi
+  /// göstermez; o durumda uygulamanın ayarlar sayfası açılır.
+  Future<void> requestMediaAccess() async {
+    final before = mediaAccess;
+    final after = await service.mediaAccess(request: true);
+    mediaAccess = after;
+    notifyListeners();
+    final unchanged = before != null && before.granted == after.granted && before.location == after.location && before.partial == after.partial;
+    if (unchanged && (!after.granted || after.partial || !after.location)) {
+      await service.openUrl('package:dev.oalabs.harrier');
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) unawaited(refreshMediaAccess());
+  }
+
+  /// Ayarlardan dönüldüğünde izin durumunu yeniden okur.
+  Future<void> refreshMediaAccess() async {
+    if (!service.needsMediaPermission) return;
+    mediaAccess = await service.mediaAccess();
     notifyListeners();
   }
 
@@ -91,6 +127,7 @@ class AppState extends ChangeNotifier {
       _token = null;
       progress = null;
     }
+    if (service.needsMediaPermission) unawaited(refreshMediaAccess());
   }
 
   void _onProgress(ScanProgress p) {
@@ -643,7 +680,10 @@ class AppState extends ChangeNotifier {
     _liveSub = service.liveStats().listen(
       (s) {
         live = s;
-        _push(cpuHistory, s.cpuPercent);
+        // Android işlemci kullanımını göstermez: anlık hızın en yüksek hıza oranı çizilir.
+        final maxMhz = systemInfo?.maxMhz ?? 0;
+        final cpu = s.cpuPercent ?? (maxMhz > 0 && s.cpuMhz > 0 ? (s.cpuMhz / maxMhz * 100).clamp(0.0, 100.0) : null);
+        if (cpu != null) _push(cpuHistory, cpu);
         final ram = ramPercent;
         if (ram != null) _push(ramHistory, ram);
         final gpu = s.gpuPercent;

@@ -42,7 +42,7 @@ class LocationScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (!state.service.isSample) ...[
+            if (state.service.isDesktop) ...[
               FolderBar(
                 path: state.gpsRoot,
                 title: L.t('İncelenecek fotoğraf klasörünü seçin', 'Choose the photo folder to check'),

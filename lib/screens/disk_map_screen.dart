@@ -27,19 +27,19 @@ class DiskMapScreen extends StatelessWidget {
       runSpacing: 8,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        if (!state.service.isSample) ...[
+        if (state.service.isDesktop)
           OutlinedButton.icon(
             onPressed: state.anyBusy ? null : () => _choose(state),
             icon: const Icon(Icons.folder_open_outlined, size: 18),
             label: Text(L.t('Klasör seç', 'Choose folder')),
           ),
-          if (parent != null)
-            OutlinedButton.icon(
-              onPressed: state.anyBusy ? null : () => state.loadUsage(parent),
-              icon: const Icon(Icons.arrow_upward, size: 18),
-              label: Text(L.t('Üst klasör', 'Up one level')),
-            ),
-        ],
+        // Android'de yalnızca dahili depolamanın içinde gezilir; en üstte "Üst klasör" yok.
+        if (parent != null && !state.service.isSample && (state.service.isDesktop || state.usageRoot != state.service.defaultUsageRoot()))
+          OutlinedButton.icon(
+            onPressed: state.anyBusy ? null : () => state.loadUsage(parent),
+            icon: const Icon(Icons.arrow_upward, size: 18),
+            label: Text(L.t('Üst klasör', 'Up one level')),
+          ),
         Text(state.usageRoot, style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.text)),
       ],
     );

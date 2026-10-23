@@ -6,9 +6,9 @@ import 'services/error_reporter.dart';
 import 'state/app_state.dart';
 import 'screens/shell.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final state = AppState(CleanerService.create());
+  final state = AppState(await CleanerService.start());
   ErrorReporter.init(
     logPath: state.service.errorLogPath,
     canSend: () => state.settings.sendErrorReports,

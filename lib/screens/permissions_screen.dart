@@ -57,8 +57,14 @@ class _PermissionsScreenState extends State<PermissionsScreen> {
           onSettings: () => state.service.openPrivacySettings(kind),
         ));
       }
+      final phone = !state.service.isDesktop && !state.service.isSample;
       children.add(Text(
-        L.t(
+        phone
+            ? L.t(
+                'Android, uygulamaların izinleri en son ne zaman kullandığını diğer uygulamalara göstermez; bu kayıt Ayarlar > Gizlilik > Gizlilik panosu’nda görülebilir. Bir uygulamanın iznini değiştirmek için üzerine dokunun.',
+                'Android doesn’t show other apps when a permission was last used; you can see this under Settings > Privacy > Privacy dashboard. Tap an app to change its permissions.',
+              )
+            : L.t(
           'Windows, masaüstü programlarının izinlerini tek tek kapatmaya izin vermez; yalnızca hepsini birden '
               'kapatabilirsiniz. Mağaza uygulamalarının izinlerini ise tek tek yönetebilirsiniz. '
               'Değiştirmek için “Ayarları aç” düğmesini kullanın.',
@@ -79,7 +85,10 @@ class _PermissionsScreenState extends State<PermissionsScreen> {
 
     return ModulePage(
       title: L.t('İzin Kontrolü', 'App Permissions'),
-      subtitle: L.t(
+      subtitle: !state.service.isDesktop && !state.service.isSample
+          ? L.t('Kamera, mikrofon ve konumunuza hangi uygulamaların izni olduğunu gösterir.',
+              'Shows which apps are allowed to use your camera, microphone and location.')
+          : L.t(
         'Kamera, mikrofon ve konumunuza hangi uygulamaların eriştiğini ve en son ne zaman kullandığını gösterir.',
         'Shows which apps have accessed your camera, microphone and location, and when they last did.',
       ),
@@ -159,13 +168,17 @@ class _UseRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final service = AppScope.of(context).service;
+    final phone = !service.isDesktop && !service.isSample;
     final last = use.lastUsed;
     final when = use.inUse
         ? null
-        : last == null
-            ? L.t('Hiç kullanmadı', 'Never used')
-            : L.t('Son kullanım: ${formatTime(last)}', 'Last used: ${formatTime(last)}');
-    return Padding(
+        : phone
+            ? L.t('İzni var', 'Allowed')
+            : last == null
+                ? L.t('Hiç kullanmadı', 'Never used')
+                : L.t('Son kullanım: ${formatTime(last)}', 'Last used: ${formatTime(last)}');
+    final row = Padding(
       padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
       child: Row(
         children: [
@@ -193,8 +206,11 @@ class _UseRow extends StatelessWidget {
             const SizedBox(width: 10),
             Tag(L.t('Engelli', 'Blocked'), background: const Color(0xFFF3F4F6), foreground: const Color(0xFF374151)),
           ],
+          if (phone) const Icon(Icons.chevron_right, color: AppColors.muted),
         ],
       ),
     );
+    // Android: dokununca uygulamanın izin ayarları açılır.
+    return phone ? InkWell(onTap: () => service.openUrl('package:${use.detail}'), child: row) : row;
   }
 }

@@ -67,8 +67,8 @@ class JunkScreen extends StatelessWidget {
 
     return ModulePage(
       title: L.t('Gereksiz Dosyalar', 'Junk Files'),
-      subtitle: state.service.isSample
-          ? L.t('Android, başka uygulamaların önbelleğinin silinmesine izin vermez. Burada yalnızca erişilebilen dosyalar listelenir.', 'Android doesn’t allow deleting other apps’ caches. Only files the app can access are listed here.')
+      subtitle: !state.service.isDesktop
+          ? L.t('Android, başka uygulamaların önbelleğini silmeye izin vermez. Burada eski ekran görüntüleri ve sohbet uygulamalarının medyası gibi gözden geçirebileceğiniz dosyalar listelenir. Silmeden önce Android onay ister.', 'Android doesn’t let apps clear other apps’ caches. Listed here are files worth reviewing, such as old screenshots and chat app media. Android asks for confirmation before deleting.')
           : L.t('Silmek istediğiniz kategorileri seçin. Yalnızca klasörlerin içindeki dosyalar silinir, klasörler yerinde kalır.', 'Choose the categories to delete. Only the files inside the folders are deleted; the folders stay.'),
       bottom: junk == null || junk.isEmpty || state.junkBusy
           ? null

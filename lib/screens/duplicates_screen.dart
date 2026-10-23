@@ -53,13 +53,13 @@ class DuplicatesScreen extends StatelessWidget {
               children: [
                 for (final root in state.knownRoots)
                   FilterChip(
-                    label: Text(baseName(root)),
-                    tooltip: root,
+                    label: Text(state.service.rootLabel(root)),
+                    tooltip: state.service.rootLabel(root),
                     selected: state.dupeRoots.contains(root),
                     onSelected: state.dupesBusy ? null : (_) => state.toggleRoot(root),
                     onDeleted: state.isCustomRoot(root) && !state.dupesBusy ? () => state.removeRoot(root) : null,
                   ),
-                if (!state.service.isSample)
+                if (state.service.isDesktop)
                   ActionChip(
                     avatar: const Icon(Icons.create_new_folder_outlined, size: 18),
                     label: Text(L.t('Klasör ekle', 'Add folder')),
@@ -197,7 +197,7 @@ class _GroupView extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (!state.service.isSample)
+                  if (state.service.isDesktop)
                     IconButton(
                       tooltip: L.t('Klasörde göster', 'Show in folder'),
                       onPressed: () => state.service.revealInExplorer(f.path),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/i18n.dart';
+import '../core/modules.dart';
 import '../core/format.dart';
 import '../core/theme.dart';
 import '../models/models.dart';
@@ -51,6 +52,7 @@ class ModulePage extends StatelessWidget {
                         child: Text(sub, style: const TextStyle(fontSize: 15, color: AppColors.muted, height: 1.5)),
                       ),
                     const SizedBox(height: 22),
+                    const MediaAccessBanner(),
                     for (var i = 0; i < children.length; i++) ...[
                       if (i > 0) const SizedBox(height: 18),
                       children[i],
@@ -384,3 +386,80 @@ class FolderBar extends StatelessWidget {
     );
   }
 }
+
+/// Android: fotoğraf ve videolara erişim izni yoksa (ya da yalnızca bazı fotoğraflara izin
+/// verildiyse) medya kullanan ekranların üstünde açıklama ve "İzin ver" düğmesi gösterir.
+class MediaAccessBanner extends StatelessWidget {
+  const MediaAccessBanner({super.key});
+
+  static const _mediaModules = {
+    ModuleId.smartScan,
+    ModuleId.junk,
+    ModuleId.duplicates,
+    ModuleId.diskMap,
+    ModuleId.media,
+    ModuleId.metadata,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<AppScope>();
+    final state = scope?.notifier;
+    final access = state?.mediaAccess;
+    if (state == null || access == null || !state.service.needsMediaPermission || !_mediaModules.contains(state.current)) {
+      return const SizedBox.shrink();
+    }
+    final String? message;
+    if (!access.granted) {
+      message = L.t(
+        'Taramak için fotoğraf, video ve müzik dosyalarınıza erişim izni gerekiyor. Dosyalarınız telefonunuzdan çıkmaz.',
+        'Scanning needs access to your photos, videos and music. Your files never leave your phone.',
+      );
+    } else if (access.partial) {
+      message = L.t(
+        'Yalnızca seçtiğiniz fotoğraflara izin verdiniz; tarama sonuçları eksik olabilir.',
+        'You allowed access to selected photos only, so results may be incomplete.',
+      );
+    } else if (state.current == ModuleId.metadata && !access.location) {
+      message = L.t(
+        'Fotoğraflardaki konum bilgisini görebilmek için “fotoğraflardaki konumlara erişim” izni gerekiyor.',
+        'Seeing location data in photos needs the “access your media location” permission.',
+      );
+    } else {
+      message = null;
+    }
+    if (message == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
+        decoration: BoxDecoration(color: const Color(0xFFEFF4FF), borderRadius: BorderRadius.circular(12)),
+        child: Wrap(
+          spacing: 12,
+          runSpacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 560),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.photo_library_outlined, size: 20, color: AppColors.accent),
+                  const SizedBox(width: 10),
+                  Flexible(child: Text(message, style: const TextStyle(fontSize: 13, height: 1.4, color: Color(0xFF1E3A8A)))),
+                ],
+              ),
+            ),
+            FilledButton(
+              onPressed: state.requestMediaAccess,
+              style: FilledButton.styleFrom(minimumSize: const Size(0, 40)),
+              child: Text(access.granted ? L.t('İzni değiştir', 'Change access') : L.t('İzin ver', 'Allow access')),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+

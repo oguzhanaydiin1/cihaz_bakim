@@ -50,12 +50,21 @@ class _SystemScreenState extends State<SystemScreen> {
     final usedRam = info != null && live != null ? info.totalRam - live.ramAvailable : null;
     final gpuName = info != null && info.gpus.isNotEmpty ? info.gpus.first.name : '';
     final temp = live?.temperature;
+    // Android, uygulamalara işlemci kullanımını, ekran kartını ve disk hızını göstermez.
+    final phone = !state.service.isDesktop && !state.service.isSample;
+    final cpuPct = live?.cpuPercent;
 
     final tiles = <Widget>[
       _LiveTile(
         title: L.t('İşlemci', 'Processor'),
-        value: live == null ? '—' : _pct(live.cpuPercent),
-        detail: live != null && live.cpuMhz > 0 ? '${_ghz(live.cpuMhz)} GHz' : L.t('Kullanım', 'Usage'),
+        value: live == null
+            ? '—'
+            : cpuPct != null
+                ? _pct(cpuPct)
+                : (live.cpuMhz > 0 ? '${_ghz(live.cpuMhz)} GHz' : '—'),
+        detail: cpuPct == null
+            ? L.t('Anlık hız', 'Current speed')
+            : (live != null && live.cpuMhz > 0 ? '${_ghz(live.cpuMhz)} GHz' : L.t('Kullanım', 'Usage')),
         history: state.cpuHistory,
       ),
       _LiveTile(
@@ -64,6 +73,7 @@ class _SystemScreenState extends State<SystemScreen> {
         detail: usedRam != null && info != null ? '${formatBytes(usedRam)} / ${formatBytes(info.totalRam)}' : L.t('Kullanım', 'Usage'),
         history: state.ramHistory,
       ),
+      if (!phone)
       _LiveTile(
         title: L.t('Ekran kartı', 'Graphics'),
         value: live?.gpuPercent == null ? '—' : _pct(live!.gpuPercent!),
@@ -73,13 +83,18 @@ class _SystemScreenState extends State<SystemScreen> {
       _LiveTile(
         title: L.t('Sıcaklık', 'Temperature'),
         value: temp == null ? '—' : '${temp.toStringAsFixed(0)} °C',
-        detail: temp == null ? L.t('Bu bilgisayar paylaşmıyor', 'Not reported by this PC') : L.t('Termal bölge, yaklaşık', 'Thermal zone, approximate'),
+        detail: phone
+            ? L.t('Pil sıcaklığı', 'Battery temperature')
+            : (temp == null ? L.t('Bu bilgisayar paylaşmıyor', 'Not reported by this PC') : L.t('Termal bölge, yaklaşık', 'Thermal zone, approximate')),
       ),
+      if (live?.diskRead != null && live?.diskWrite != null)
       _LiveTile(
         title: 'Disk',
-        value: live == null ? '—' : _rate(live.diskRead + live.diskWrite),
-        detail: live == null ? L.t('Okuma ve yazma', 'Read and write') : L.t('Okuma ${_rate(live.diskRead)} · Yazma ${_rate(live.diskWrite)}', 'Read ${_rate(live.diskRead)} · Write ${_rate(live.diskWrite)}'),
-      ),
+        value: _rate(live!.diskRead! + live.diskWrite!),
+        detail: L.t('Okuma ${_rate(live.diskRead!)} · Yazma ${_rate(live.diskWrite!)}', 'Read ${_rate(live.diskRead!)} · Write ${_rate(live.diskWrite!)}'),
+      )
+      else if (!phone)
+      _LiveTile(title: 'Disk', value: '—', detail: L.t('Okuma ve yazma', 'Read and write')),
       _LiveTile(
         title: L.t('Ağ', 'Network'),
         value: live == null ? '—' : _rate(live.netDown),
@@ -89,12 +104,21 @@ class _SystemScreenState extends State<SystemScreen> {
 
     return ModulePage(
       title: L.t('Sistem Bilgisi', 'System Info'),
-      subtitle: L.t('Bilgisayarınızın donanımı ve anlık durumu. Değerler birkaç saniyede bir yenilenir.', 'Your computer’s hardware and what it’s doing right now. Values refresh every few seconds.'),
+      subtitle: phone
+          ? L.t('Telefonunuzun donanımı ve anlık durumu. Değerler birkaç saniyede bir yenilenir.', 'Your phone’s hardware and what it’s doing right now. Values refresh every few seconds.')
+          : L.t('Bilgisayarınızın donanımı ve anlık durumu. Değerler birkaç saniyede bir yenilenir.', 'Your computer’s hardware and what it’s doing right now. Values refresh every few seconds.'),
       children: [
         if (state.service.isSample) const SampleBanner(),
         Wrap(spacing: 14, runSpacing: 14, children: [for (final t in tiles) SizedBox(width: 250, child: t)]),
         if (info != null) _HardwareCard(info: info),
         if (live != null && live.topMemory.isNotEmpty) _TopMemoryCard(items: live.topMemory, totalRam: info?.totalRam ?? 0),
+        if (phone)
+          Text(
+            L.t('Android, uygulamaların işlemci kullanımını, ekran kartını ve disk hızını okumasına izin vermez. İşlemci kartında anlık hız, grafikte bu hızın en yüksek hıza oranı gösterilir. Sıcaklık, pilin sıcaklığıdır.',
+                'Android doesn’t let apps read processor usage, graphics or disk speed. The processor card shows the current speed, and the chart shows it as a share of the maximum. The temperature is the battery’s.'),
+            style: const TextStyle(fontSize: 12, color: AppColors.muted, height: 1.5),
+          )
+        else
         Text(
           L.t('İşlemci sıcaklığı hakkında: Windows işlemcinin kendi sıcaklığını paylaşmaz. Burada gösterilen, anakartın bildirdiği termal bölge sıcaklığıdır; birçok bilgisayarda hiç bildirilmez ya da işlemciden düşük çıkar.',
               'About processor temperature: Windows doesn’t share the processor’s own temperature. What’s shown here is the thermal zone temperature reported by the motherboard; many computers don’t report it, or it reads lower than the processor.'),

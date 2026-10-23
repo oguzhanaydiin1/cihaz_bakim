@@ -125,9 +125,9 @@ class SupportScreen extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   L.t(
-                    'E-posta programın, uygulama sürümü ve Windows bilgisiyle doldurulmuş bir taslakla açılır. '
+                    'E-posta programın, uygulama sürümü ve cihaz bilgisiyle doldurulmuş bir taslakla açılır. '
                         'Hata kaydını da kopyalayıp e-postana ekleyebilirsin; sorunu bulmamızı çok kolaylaştırır.',
-                    'Your email app opens with a draft that already includes the app version and Windows details. '
+                    'Your email app opens with a draft that already includes the app version and device details. '
                         'You can also copy the error log into your email; it makes finding the problem much easier.',
                   ),
                   style: const TextStyle(color: AppColors.muted, height: 1.5),
@@ -172,6 +172,7 @@ class SupportScreen extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(24, 22, 24, 8),
                 child: Text(L.t('Sık sorulan sorular', 'FAQ'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
               ),
+              if (!Platform.isAndroid)
               _Faq(
                 L.t('Windows “Bilgisayarınız korundu” uyarısı veriyor.', 'Windows says “Windows protected your PC”.'),
                 L.t(
@@ -181,6 +182,26 @@ class SupportScreen extends StatelessWidget {
                       'Choose “More info”, then “Run anyway”.',
                 ),
               ),
+              if (Platform.isAndroid) ...[
+                _Faq(
+                  L.t('Neden fotoğraf ve videolarıma erişim istiyor?', 'Why does it ask for access to my photos and videos?'),
+                  L.t(
+                    'Android, uygulamaların başka uygulamaların dosyalarına yalnızca fotoğraf, video ve müzik kütüphanesi üzerinden erişmesine izin verir. '
+                        'Gereksiz dosyalar, kopyalar, disk haritası ve fotoğraf araçları bu kütüphaneyi tarar. Dosyaların hiçbir yere gönderilmez.',
+                    'Android only lets apps reach other apps’ files through the photo, video and music library. '
+                        'Junk files, duplicates, the disk map and the photo tools scan this library. Your files are never sent anywhere.',
+                  ),
+                ),
+                _Faq(
+                  L.t('Sildiğim dosyalar nereye gidiyor?', 'Where do deleted files go?'),
+                  L.t(
+                    'Kopyalar ve küçültülen fotoğrafların orijinalleri telefonun çöp kutusuna taşınır; 30 gün içinde geri alabilirsin. '
+                        'Gereksiz dosyalar kalıcı silinir. Her iki durumda da Android önce onay ister.',
+                    'Duplicates and the originals of compressed photos go to your phone’s trash, where you can restore them for 30 days. '
+                        'Junk files are deleted permanently. Either way, Android asks you first.',
+                  ),
+                ),
+              ] else
               _Faq(
                 L.t('Sildiğim dosyalar nereye gidiyor?', 'Where do deleted files go?'),
                 L.t(
@@ -191,6 +212,7 @@ class SupportScreen extends StatelessWidget {
                       'Temporary files and caches are deleted directly, because programs recreate them when needed.',
                 ),
               ),
+              if (!Platform.isAndroid)
               _Faq(
                 L.t('Neden yönetici izni istiyor?', 'Why does it ask for administrator rights?'),
                 L.t(

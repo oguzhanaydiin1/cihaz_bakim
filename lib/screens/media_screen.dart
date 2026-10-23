@@ -51,7 +51,7 @@ class MediaScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (!state.service.isSample) ...[
+            if (state.service.isDesktop) ...[
               FolderBar(
                 path: state.photosRoot,
                 title: L.t('Fotoğrafların bulunduğu klasörü seçin', 'Choose the folder with your photos'),
@@ -93,6 +93,16 @@ class MediaScreen extends StatelessWidget {
                       ),
             ),
             const SizedBox(height: 8),
+            if (!state.service.isDesktop && !state.service.isSample)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Text(
+                  L.t('Orijinaller telefonun çöp kutusuna taşınır; 30 gün içinde geri alabilirsiniz.',
+                      'Originals are moved to your phone’s trash; you can restore them within 30 days.'),
+                  style: const TextStyle(fontSize: 13, color: AppColors.muted, height: 1.4),
+                ),
+              )
+            else
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               value: o.backup,

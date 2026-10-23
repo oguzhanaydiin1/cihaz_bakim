@@ -11,7 +11,7 @@ import 'isolate_runner.dart';
 import 'media_utils.dart';
 
 /// Windows için gerçek tarama ve temizleme.
-class WindowsCleaner implements CleanerService {
+class WindowsCleaner extends CleanerService {
   final Map<String, String> _env = Platform.environment;
   bool? _admin;
 
@@ -29,6 +29,9 @@ class WindowsCleaner implements CleanerService {
 
   @override
   bool get isSample => false;
+
+  @override
+  bool get isDesktop => true;
 
   @override
   bool get supportsStartup => true;

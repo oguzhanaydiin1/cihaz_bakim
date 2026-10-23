@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import '../models/models.dart';
+import '../core/format.dart';
+import 'android_cleaner.dart';
 import 'isolate_runner.dart';
 import 'sample_cleaner.dart';
 import 'windows_cleaner.dart';
@@ -12,8 +14,28 @@ import 'windows_cleaner.dart';
 abstract class CleanerService {
   static CleanerService create() => Platform.isWindows ? WindowsCleaner() : SampleCleaner();
 
+  /// Uygulama açılırken kullanılır: Android'de önce uygulamanın veri klasörü öğrenilir.
+  static Future<CleanerService> start() async {
+    if (Platform.isWindows) return WindowsCleaner();
+    if (Platform.isAndroid) return AndroidCleaner.create();
+    return SampleCleaner();
+  }
+
   /// true ise gösterilen veriler örnektir.
   bool get isSample;
+
+  /// Masaüstü (Windows): klasör seçme, klasörde gösterme, yönetici izni, pil raporu gibi
+  /// yalnızca masaüstünde anlamlı özellikler.
+  bool get isDesktop => false;
+
+  /// Fotoğraf/video erişim izni gerekiyor mu (Android)?
+  bool get needsMediaPermission => false;
+
+  /// Medya izni durumu. [request] true ise gerekirse Android'in izin penceresini açar.
+  Future<MediaAccess> mediaAccess({bool request = false}) async => const MediaAccess(granted: true);
+
+  /// Kopya bulucudaki klasör çipinin adı.
+  String rootLabel(String root) => baseName(root);
 
   /// Başlangıç programları modülü destekleniyor mu?
   bool get supportsStartup;

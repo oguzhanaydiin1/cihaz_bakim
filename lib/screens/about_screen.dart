@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../core/app_info.dart';
@@ -114,10 +116,15 @@ class _UpdateCard extends StatelessWidget {
     final last = state.lastUpdateCheck;
 
     final (String title, String detail) = switch (state.updateStatus) {
-      UpdateStatus.unsupported => (
-          L.t('Geliştirme sürümü', 'Development build'),
-          L.t('Güncellemeler, kurulum dosyasıyla yüklenen sürümde çalışır.', 'Updates work in the version installed from the setup file.'),
-        ),
+      UpdateStatus.unsupported => Platform.isAndroid
+          ? (
+              L.t('Android beta sürümü', 'Android beta'),
+              L.t('Android sürümünde yeni sürümler şimdilik oalabs.dev’den elle indirilir.', 'On Android, new versions are downloaded from oalabs.dev for now.'),
+            )
+          : (
+              L.t('Geliştirme sürümü', 'Development build'),
+              L.t('Güncellemeler, kurulum dosyasıyla yüklenen sürümde çalışır.', 'Updates work in the version installed from the setup file.'),
+            ),
       UpdateStatus.checking => (L.t('Denetleniyor…', 'Checking…'), ''),
       UpdateStatus.latest => (
           L.t('Uygulama güncel', 'You’re up to date'),

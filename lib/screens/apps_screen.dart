@@ -56,10 +56,12 @@ class _AppsScreenState extends State<AppsScreen> {
     final ok = await confirm(
       context,
       title: L.t('${app.name} kaldırılsın mı?', 'Uninstall ${app.name}?'),
-      message: L.t(
-        'Programın kendi kaldırıcısı açılacak. Onun adımlarını tamamlayın; Windows izin isteyebilir.',
-        'The program’s own uninstaller will open. Follow its steps; Windows may ask for permission.',
-      ),
+      message: state.service.isDesktop
+          ? L.t(
+              'Programın kendi kaldırıcısı açılacak. Onun adımlarını tamamlayın; Windows izin isteyebilir.',
+              'The program’s own uninstaller will open. Follow its steps; Windows may ask for permission.',
+            )
+          : L.t('Android’in kaldırma onay penceresi açılacak.', 'Android’s uninstall confirmation will open.'),
       action: L.t('Kaldır', 'Uninstall'),
     );
     if (!ok || !mounted) return;
@@ -136,10 +138,13 @@ class _AppsScreenState extends State<AppsScreen> {
 
     return ModulePage(
       title: L.t('Uygulama Kaldırıcı', 'Uninstaller'),
-      subtitle: L.t(
-        'Bilgisayarınızdaki programlar. Kaldırma, programın kendi kaldırıcısıyla yapılır; ardından kalan klasör varsa onu da temizlemeyi önerir.',
-        'The programs on your computer. Each is removed with its own uninstaller; afterwards, any leftover folder can be cleaned up too.',
-      ),
+      subtitle: state.service.isDesktop || state.service.isSample
+          ? L.t(
+              'Bilgisayarınızdaki programlar. Kaldırma, programın kendi kaldırıcısıyla yapılır; ardından kalan klasör varsa onu da temizlemeyi önerir.',
+              'The programs on your computer. Each is removed with its own uninstaller; afterwards, any leftover folder can be cleaned up too.',
+            )
+          : L.t('Telefonunuza sonradan yüklediğiniz uygulamalar. Boyut, uygulama dosyasının boyutudur; verileri ve önbelleği dahil değildir.',
+              'Apps you installed on your phone. The size is the app file’s size; data and cache aren’t included.'),
       children: [
         if (state.service.isSample) const SampleBanner(),
         Wrap(

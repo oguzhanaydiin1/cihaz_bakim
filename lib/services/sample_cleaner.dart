@@ -10,7 +10,7 @@ import 'isolate_runner.dart';
 /// Android'de gerçek tarama sonraki adımda platform kanalı + MediaStore ile yazılacak.
 /// Not: Android 8'den beri başka uygulamaların önbelleği silinemez; bu yüzden
 /// Android kategorileri yalnızca uygulamanın erişebildiği dosyalardan oluşur.
-class SampleCleaner implements CleanerService {
+class SampleCleaner extends CleanerService {
   static const _mb = 1024 * 1024;
   static const _gb = 1024 * _mb;
 

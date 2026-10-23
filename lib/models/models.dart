@@ -317,7 +317,33 @@ class BatteryInfo {
     required this.fullChargeCapacity,
     this.cycleCount,
     this.chemistry = '',
+    this.level,
+    this.temperature,
+    this.voltageMv,
+    this.charging,
+    this.status,
+    this.estimatedFullMah,
   });
+
+  // Android: Android pilin ilk günkü kapasitesini uygulamalara göstermez; bunun yerine
+  // sistemin kendi sağlık değerlendirmesi, sıcaklık, şarj ve döngü sayısı gösterilir.
+
+  /// Şarj yüzdesi (0-100).
+  final int? level;
+
+  /// °C
+  final double? temperature;
+  final int? voltageMv;
+  final bool? charging;
+
+  /// Android'in değerlendirmesi: good, overheat, dead, overvoltage, cold, failure, unknown.
+  final String? status;
+
+  /// Anlık yük ve yüzdeden tahmin edilen tam şarj kapasitesi (mAh).
+  final int? estimatedFullMah;
+
+  /// Kapasite karşılaştırması yapılabiliyor mu (Windows dizüstü)?
+  bool get hasCapacity => designCapacity > 0;
 
   final String name;
 
@@ -425,6 +451,23 @@ class GpsPhoto {
 }
 
 // ---------------------------------------------------------------------------
+// Android medya izni
+// ---------------------------------------------------------------------------
+
+class MediaAccess {
+  const MediaAccess({required this.granted, this.partial = false, this.location = true});
+
+  /// Fotoğraf ve videolara erişim var mı?
+  final bool granted;
+
+  /// Kullanıcı yalnızca bazı fotoğraflara izin vermiş (Android 14).
+  final bool partial;
+
+  /// Fotoğraflardaki konum bilgisi okunabiliyor mu?
+  final bool location;
+}
+
+// ---------------------------------------------------------------------------
 // Sistem bilgisi
 // ---------------------------------------------------------------------------
 
@@ -477,19 +520,20 @@ class ProcessMemory {
 /// Birkaç saniyede bir yenilenen canlı ölçümler.
 class LiveStats {
   const LiveStats({
-    required this.cpuPercent,
+    this.cpuPercent,
     required this.cpuMhz,
     required this.ramAvailable,
     this.gpuPercent,
-    required this.diskRead,
-    required this.diskWrite,
+    this.diskRead,
+    this.diskWrite,
     required this.netDown,
     required this.netUp,
     this.temperature,
     this.topMemory = const [],
   });
 
-  final double cpuPercent;
+  /// null = bu platformda okunamıyor (Android, uygulamalara işlemci kullanımını göstermez).
+  final double? cpuPercent;
 
   /// Anlık işlemci hızı (0 = bilinmiyor).
   final int cpuMhz;
@@ -498,9 +542,9 @@ class LiveStats {
   /// null = ekran kartı ölçümü yok
   final double? gpuPercent;
 
-  /// bayt/saniye
-  final int diskRead;
-  final int diskWrite;
+  /// bayt/saniye (null = okunamıyor)
+  final int? diskRead;
+  final int? diskWrite;
   final int netDown;
   final int netUp;
 

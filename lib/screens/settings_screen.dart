@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../core/format.dart';
@@ -73,7 +75,9 @@ class SettingsScreen extends StatelessWidget {
               subtitle: Text(
                 Updater.supported
                     ? L.t('Uygulama açılırken yeni sürüm olup olmadığına bakılır.', 'Looks for a new version when the app starts.')
-                    : L.t('Geliştirme sürümünde güncelleme denetlenmez.', 'Updates aren’t checked in a development build.'),
+                    : Platform.isAndroid
+                        ? L.t('Android sürümünde şimdilik güncelleme denetlenmez.', 'Updates aren’t checked on Android yet.')
+                        : L.t('Geliştirme sürümünde güncelleme denetlenmez.', 'Updates aren’t checked in a development build.'),
               ),
             ),
             SwitchListTile(
@@ -92,7 +96,7 @@ class SettingsScreen extends StatelessWidget {
         ),
 
         // ---- Yönetici izni ----
-        if (!state.service.isSample)
+        if (state.service.isDesktop)
           _Section(
             title: L.t('Yönetici izni', 'Administrator rights'),
             children: [
@@ -148,7 +152,7 @@ class SettingsScreen extends StatelessWidget {
               showSelectedIcon: false,
               onSelectionChanged: (set) => state.setMinDuplicateSize(set.first),
             ),
-            if (!state.service.isSample) ...[
+            if (state.service.isDesktop) ...[
               const SizedBox(height: 22),
               Text(L.t('Hariç tutulan klasörler', 'Excluded folders'), style: const TextStyle(fontWeight: FontWeight.w600)),
               const SizedBox(height: 4),
