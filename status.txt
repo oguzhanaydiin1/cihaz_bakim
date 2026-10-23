@@ -1,0 +1,3 @@
+build=success commit=f5b3f249ace9527e6bc7df6fc3ae11a4930ca733 run=39935177243
+signing=test
+apk=HarrierCleaner-Android-0.2.1.apk size=54148131 sha256=be7104f270657a55ca1075a2e52e8badda2c59c6a2c216a65c93e8ba4b0343dd
