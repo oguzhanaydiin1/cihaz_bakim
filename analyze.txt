@@ -1,0 +1,6 @@
+Analyzing cihaz_bakim...                                        
+
+   info • Angle brackets will be interpreted as HTML. Try using backticks around the content with angle brackets, or try replacing `<` with `&lt;` and `>` with `&gt;` • lib/services/error_reporter.dart:61:8 • unintended_html_in_doc_comment
+   info • Angle brackets will be interpreted as HTML. Try using backticks around the content with angle brackets, or try replacing `<` with `&lt;` and `>` with `&gt;` • lib/services/error_reporter.dart:61:35 • unintended_html_in_doc_comment
+
+2 issues found. (ran in 8.7s)
