@@ -4,6 +4,7 @@ import '../core/i18n.dart';
 import '../core/format.dart';
 import '../core/theme.dart';
 import '../models/models.dart';
+import '../services/error_reporter.dart';
 import '../state/app_state.dart';
 import '../widgets/common.dart';
 
@@ -31,7 +32,18 @@ class MediaScreen extends StatelessWidget {
       action: L.t('Küçült', 'Compress'),
     );
     if (!ok || !context.mounted) return;
-    final r = await state.compressSelectedPhotos();
+    CompressResult? r;
+    try {
+      r = await state.compressSelectedPhotos();
+    } catch (e, st) {
+      ErrorReporter.record(e, st);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(L.t('Küçültme tamamlanamadı. Fotoğraflarınıza dokunulmadıysa galeride yerinde durur.',
+            'Compression couldn’t finish. Photos that weren’t processed are unchanged.')),
+      ));
+      return;
+    }
     if (r == null || !context.mounted) return;
     final parts = <String>[
       L.t('${r.compressed} fotoğraf küçültüldü, ${formatBytes(r.savedBytes)} kazanıldı.', '${r.compressed} photos compressed, ${formatBytes(r.savedBytes)} saved.'),

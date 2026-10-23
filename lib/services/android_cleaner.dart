@@ -455,7 +455,10 @@ class AndroidCleaner extends CleanerService {
         if (token?.isCancelled ?? false) return null;
         final m = selected[i];
         onProgress?.call(ScanProgress(phase: prepare, files: i, total: selected.length, current: m.dir));
-        final cache = await _ch.invokeMethod<String>('copyToCache', {'uri': m.uri, 'name': m.name});
+        String? cache;
+        try {
+          cache = await _ch.invokeMethod<String>('copyToCache', {'uri': m.uri, 'name': m.name});
+        } catch (_) {}
         if (cache == null) {
           failed++;
         } else {
@@ -486,15 +489,21 @@ class AndroidCleaner extends CleanerService {
         final (cache, temp, oldSize, newSize, _) = items[i];
         final m = cacheToMedia[cache]!;
         onProgress?.call(ScanProgress(phase: L.t('Kaydediliyor', 'Saving'), files: i, total: items.length, bytes: saved, current: m.dir));
+        // Bir fotoğraftaki hata işlemi kesmez: o fotoğraf atlanır, diğerleri devam eder.
         String? backup;
         if (options.backup) {
-          backup = await _ch.invokeMethod<String>('backupCopy', {'uri': m.uri, 'name': m.name});
+          try {
+            backup = await _ch.invokeMethod<String>('backupCopy', {'uri': m.uri, 'name': m.name});
+          } catch (_) {}
           if (backup == null) {
             failed++; // yedek alınamadıysa orijinale dokunma
             continue;
           }
         }
-        final ok = await _ch.invokeMethod<bool>('overwrite', {'uri': m.uri, 'src': temp}) ?? false;
+        var ok = false;
+        try {
+          ok = await _ch.invokeMethod<bool>('overwrite', {'uri': m.uri, 'src': temp}) ?? false;
+        } catch (_) {}
         if (!ok) {
           failed++; // yazma yarıda kaldıysa yedek tek sağlam kopya olabilir: silinmez
           continue;
