@@ -30,13 +30,10 @@ for name in ('hc_a.jpg', 'hc_b.jpg'):
     with open(os.path.join(out, name), 'wb') as f:
         f.write(buf.getvalue())
 
-# Yumuşak geçişli büyük fotoğraf: kalite 100'de büyük, 75'te çok küçülür.
-w, h = 3000, 2000
-big = Image.new('RGB', (w, h))
-px = big.load()
-for y in range(h):
-    for x in range(w):
-        px[x, y] = (x * 255 // w, y * 255 // h, (x + y) * 255 // (w + h))
+# Ayrıntılı (gürültülü) büyük fotoğraf: kalite 100'de birkaç MB, 75'te belirgin küçülür.
+# (Düz renk geçişi fazla iyi sıkışır ve 1 MB sınırının altında kalır.)
+w, h = 2000, 1500
+big = Image.frombytes('RGB', (w, h), os.urandom(w * h * 3))
 big.save(os.path.join(out, 'hc_big.jpg'), 'jpeg', quality=100)
 for n in os.listdir(out):
     print(n, os.path.getsize(os.path.join(out, n)))
