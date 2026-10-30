@@ -1,0 +1,15 @@
+
+::group::✅ Passing tests
+✅ /home/runner/work/cihaz_bakim/cihaz_bakim/test/widget_test.dart: formatBytes Türkçe biçim kullanır
+✅ /home/runner/work/cihaz_bakim/cihaz_bakim/test/widget_test.dart: formatBytes İngilizce biçim kullanır
+✅ /home/runner/work/cihaz_bakim/cihaz_bakim/test/widget_test.dart: sürüm karşılaştırma
+✅ /home/runner/work/cihaz_bakim/cihaz_bakim/test/android_cleaner_test.dart: ayar ve hata günlüğü uygulamanın klasöründe
+✅ /home/runner/work/cihaz_bakim/cihaz_bakim/test/android_cleaner_test.dart: kopya bulucu yalnızca içeriği aynı olanları gruplar ve kopyayı çöp kutusuna taşır
+✅ /home/runner/work/cihaz_bakim/cihaz_bakim/test/android_cleaner_test.dart: gereksiz dosyalar: eski ekran görüntüsü seçili, yenisi listede değil, WhatsApp videosu seçili değil
+✅ /home/runner/work/cihaz_bakim/cihaz_bakim/test/android_cleaner_test.dart: disk haritası: üst düzey klasörler ve "diğer"; klasörün içine inilebiliyor
+✅ /home/runner/work/cihaz_bakim/cihaz_bakim/test/widget_test.dart: Akıllı Tarama ekranı açılır
+✅ /home/runner/work/cihaz_bakim/cihaz_bakim/test/widget_test.dart: İngilizce arayüz
+✅ /home/runner/work/cihaz_bakim/cihaz_bakim/test/widget_test.dart: hata raporundan dosya yolları ve dosya adları tamamen silinir
+::endgroup::
+
+🎉 10 tests passed.
