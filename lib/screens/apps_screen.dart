@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 
 import '../core/i18n.dart';
@@ -215,6 +217,8 @@ class _AppRow extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 12, 16, 12),
       child: Row(
         children: [
+          _AppIcon(app: app),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -241,6 +245,34 @@ class _AppRow extends StatelessWidget {
               ? const SizedBox(width: 92, child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))))
               : OutlinedButton(onPressed: enabled ? onUninstall : null, child: Text(L.t('Kaldır', 'Uninstall'))),
         ],
+      ),
+    );
+  }
+}
+
+/// Android'de uygulamanın kendi simgesi; Windows'ta genel bir program simgesi.
+class _AppIcon extends StatelessWidget {
+  const _AppIcon({required this.app});
+
+  final InstalledApp app;
+  static final _cache = <String, Future<Uint8List?>>{};
+
+  @override
+  Widget build(BuildContext context) {
+    final service = AppScope.of(context).service;
+    const fallback = SizedBox(width: 40, height: 40, child: Icon(Icons.apps_outlined, color: AppColors.muted));
+    if (service.isDesktop || service.isSample) return fallback;
+    final future = _cache.putIfAbsent(app.registryKey, () => service.appIcon(app, size: 120));
+    return SizedBox(
+      width: 40,
+      height: 40,
+      child: FutureBuilder<Uint8List?>(
+        future: future,
+        builder: (context, snap) {
+          final data = snap.data;
+          if (data == null) return snap.connectionState == ConnectionState.done ? fallback : const SizedBox();
+          return Image.memory(data, gaplessPlayback: true);
+        },
       ),
     );
   }

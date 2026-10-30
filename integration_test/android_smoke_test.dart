@@ -40,7 +40,13 @@ void main() {
     expect(live.ramAvailable, greaterThan(0));
 
     expect(await c.permissions(), isNotNull);
-    expect(await c.installedApps(), isA<List<InstalledApp>>());
+    final apps = await c.installedApps();
+    expect(apps, isA<List<InstalledApp>>());
+    if (apps.isNotEmpty) {
+      final icon = await c.appIcon(apps.first);
+      expect(icon, isNotNull, reason: 'uygulama simgesi alınamadı');
+      expect(icon!.sublist(1, 4), [0x50, 0x4E, 0x47]); // PNG
+    }
     expect(c.settingsPath, contains('dev.oalabs.harrier'));
   });
 
@@ -70,6 +76,12 @@ void main() {
 
     final photos = await c.findPhotos('', minSize: 1024 * 1024);
     expect(photos!.any((p) => p.path.endsWith('hc_big.jpg')), isTrue);
+
+    // Önizleme: kopya listesindeki fotoğrafın küçük resmi alınabiliyor (JPEG).
+    final a = dups.expand((g) => g.files).firstWhere((f) => f.path.endsWith('hc_a.jpg'));
+    final thumb = await c.thumbnail(a.path, size: 160);
+    expect(thumb, isNotNull, reason: 'küçük resim alınamadı');
+    expect(thumb!.sublist(0, 2), [0xFF, 0xD8]);
   });
 
   testWidgets('yazma: konum silme, küçültme, kopyayı silme (Android 10)', (tester) async {

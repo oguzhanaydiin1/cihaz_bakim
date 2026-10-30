@@ -38,6 +38,8 @@ import java.util.concurrent.Executors
  */
 class MainActivity : FlutterActivity() {
     private val worker = Executors.newFixedThreadPool(2)
+    /** Küçük resimler ayrı havuzda: uzun bir tarama önizlemeleri bekletmesin. */
+    private val thumbs = Executors.newFixedThreadPool(3)
     private val main = Handler(Looper.getMainLooper())
 
     // Kullanıcı yanıtı bekleyen istekler (izin, silme onayı, kaldırma).
@@ -136,6 +138,22 @@ class MainActivity : FlutterActivity() {
             "uninstall" -> uninstall(call.argument<String>("pkg")!!, result)
             "permissions" -> background(result) { permissions() }
             "open" -> result.success(open(call.argument<String>("url") ?: ""))
+            "appIcon" -> {
+                val pkg = call.argument<String>("pkg")!!
+                val size = call.argument<Int>("size") ?: 96
+                thumbs.execute {
+                    val bytes = try { appIcon(pkg, size) } catch (e: Exception) { null }
+                    main.post { result.success(bytes) }
+                }
+            }
+            "thumb" -> {
+                val uri = call.argument<String>("uri")!!
+                val size = call.argument<Int>("size") ?: 160
+                thumbs.execute {
+                    val bytes = try { thumbnail(uri, size) } catch (e: Exception) { null }
+                    main.post { result.success(bytes) }
+                }
+            }
             else -> result.notImplemented()
         }
     }
@@ -206,6 +224,30 @@ class MainActivity : FlutterActivity() {
         "video" -> MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
         "audio" -> MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
         else -> MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
+    }
+
+    /** Fotoğraf/video önizlemesi (JPEG). Galerinin kendi küçük resim önbelleğini kullanır. */
+    private fun thumbnail(uri: String, size: Int): ByteArray? {
+        val s = size.coerceIn(48, 1600)
+        val bmp = contentResolver.loadThumbnail(Uri.parse(uri), android.util.Size(s, s), null)
+        val out = java.io.ByteArrayOutputStream()
+        bmp.compress(android.graphics.Bitmap.CompressFormat.JPEG, 85, out)
+        bmp.recycle()
+        return out.toByteArray()
+    }
+
+    /** Uygulama simgesi (PNG). */
+    private fun appIcon(pkg: String, size: Int): ByteArray? {
+        val d = packageManager.getApplicationIcon(pkg)
+        val s = size.coerceIn(32, 256)
+        val bmp = android.graphics.Bitmap.createBitmap(s, s, android.graphics.Bitmap.Config.ARGB_8888)
+        val canvas = android.graphics.Canvas(bmp)
+        d.setBounds(0, 0, s, s)
+        d.draw(canvas)
+        val out = java.io.ByteArrayOutputStream()
+        bmp.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, out)
+        bmp.recycle()
+        return out.toByteArray()
     }
 
     private fun queryMedia(kinds: List<String>, minSize: Long, jpegOnly: Boolean): List<Map<String, Any?>> {

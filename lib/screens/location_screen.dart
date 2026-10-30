@@ -6,6 +6,7 @@ import '../core/theme.dart';
 import '../models/models.dart';
 import '../state/app_state.dart';
 import '../widgets/common.dart';
+import '../widgets/media_thumb.dart';
 
 class LocationScreen extends StatelessWidget {
   const LocationScreen({super.key});
@@ -141,6 +142,8 @@ class _GpsRow extends StatelessWidget {
           children: [
             Checkbox(value: photo.selected, onChanged: (_) => onToggle()),
             const SizedBox(width: 6),
+            MediaThumb(path: photo.path),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

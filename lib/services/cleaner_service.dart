@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import '../models/models.dart';
 import '../core/format.dart';
@@ -139,6 +140,13 @@ abstract class CleanerService {
 
   /// Bağlantıyı (https:// veya mailto:) varsayılan programla açar.
   Future<void> openUrl(String url);
+
+  /// Fotoğraf/video önizlemesi (JPEG baytları). Desteklenmiyorsa null;
+  /// masaüstünde resim dosyaları doğrudan diskten gösterilir.
+  Future<Uint8List?> thumbnail(String path, {int size = 160}) async => null;
+
+  /// Uygulama simgesi (PNG baytları). Desteklenmiyorsa null.
+  Future<Uint8List?> appIcon(InstalledApp app, {int size = 96}) async => null;
 
   /// Hata günlüğünün yolu. null ise günlük tutulmaz.
   String? get errorLogPath;

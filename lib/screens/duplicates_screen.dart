@@ -7,6 +7,7 @@ import '../core/theme.dart';
 import '../models/models.dart';
 import '../state/app_state.dart';
 import '../widgets/common.dart';
+import '../widgets/media_thumb.dart';
 import '../widgets/folder_picker.dart';
 
 class DuplicatesScreen extends StatelessWidget {
@@ -188,6 +189,8 @@ class _GroupView extends StatelessWidget {
                 children: [
                   Checkbox(value: f.selected, onChanged: f.keep ? null : (_) => state.toggleDuplicate(f)),
                   const SizedBox(width: 6),
+                  MediaThumb(path: f.path),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

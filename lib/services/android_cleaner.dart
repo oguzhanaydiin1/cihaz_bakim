@@ -127,6 +127,26 @@ class AndroidCleaner extends CleanerService {
   @override
   Future<void> revealInExplorer(String path) async {}
 
+  @override
+  Future<Uint8List?> appIcon(InstalledApp app, {int size = 96}) async {
+    try {
+      return await _ch.invokeMethod<Uint8List>('appIcon', {'pkg': app.registryKey, 'size': size});
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  Future<Uint8List?> thumbnail(String path, {int size = 160}) async {
+    final m = _media[path];
+    if (m == null || m.kind == 'audio') return null;
+    try {
+      return await _ch.invokeMethod<Uint8List>('thumb', {'uri': m.uri, 'size': size});
+    } catch (_) {
+      return null;
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // Medya sorgusu
   // ---------------------------------------------------------------------------
