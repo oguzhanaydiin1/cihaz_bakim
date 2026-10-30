@@ -1,7 +1,7 @@
 name: cihaz_bakim
 description: Windows ve Android için cihaz bakım uygulaması.
 publish_to: 'none'
-version: 0.2.1+4
+version: 0.2.2+5
 
 environment:
   sdk: ^3.10.0
