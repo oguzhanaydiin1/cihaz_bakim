@@ -9,6 +9,7 @@ import '../core/theme.dart';
 import '../services/error_reporter.dart';
 import '../state/app_state.dart';
 import '../widgets/common.dart';
+import '../widgets/oa_labs_mark.dart';
 
 /// OA Radyo'daki "Destek" bölümünün karşılığı: iletişim bilgileri, sorun bildirme ve SSS.
 class SupportScreen extends StatelessWidget {
@@ -73,7 +74,7 @@ class SupportScreen extends StatelessWidget {
                       height: 52,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(color: AppColors.nav, borderRadius: BorderRadius.circular(14)),
-                      child: const Text('OA', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
+                      child: const OALabsMark(size: 34),
                     ),
                     const SizedBox(width: 14),
                     Expanded(
