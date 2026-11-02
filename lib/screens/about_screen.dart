@@ -9,6 +9,7 @@ import '../core/theme.dart';
 import '../services/updater.dart';
 import '../state/app_state.dart';
 import '../widgets/common.dart';
+import '../widgets/oa_labs_mark.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -68,6 +69,27 @@ class AboutScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Row(
+                  children: [
+                    OALabsSeal(
+                      size: 88,
+                      color: AppColors.nav,
+                      accent: const Color(0xFFC97A16),
+                      text: L.t(
+                        'OA LABS · ATÖLYE · 2026 · OA LABS · ATÖLYE · 2026 · ',
+                        'OA LABS · WORKSHOP · 2026 · OA LABS · WORKSHOP · 2026 · ',
+                      ),
+                    ),
+                    const SizedBox(width: 18),
+                    Expanded(
+                      child: Text(
+                        L.t('OA Labs atölyesinde özenle yapıldı.', 'Carefully made at the OA Labs workshop.'),
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
                 _Row(L.t('Geliştirici', 'Developer'), '${AppInfo.developer} · ${AppInfo.company}'),
                 _Row(L.t('İletişim', 'Contact'), AppInfo.email),
                 _Row(L.t('Web sitesi', 'Website'), 'oalabs.dev'),

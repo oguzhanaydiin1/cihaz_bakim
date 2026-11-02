@@ -1,0 +1,24 @@
+# Her PR'da kod analizi (ve varsa testler). Sürüm yayınlamaz, dosya yüklemez.
+name: PR analizi
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pr-analiz-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  analiz:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Analiz
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+      - name: Testler
+        run: if [ -d test ]; then flutter test; else echo "Test klasörü yok"; fi
