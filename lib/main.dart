@@ -18,15 +18,54 @@ Future<void> main() async {
   runApp(CihazBakimApp(state: state));
 }
 
-class CihazBakimApp extends StatelessWidget {
+class CihazBakimApp extends StatefulWidget {
   const CihazBakimApp({super.key, required this.state});
 
   final AppState state;
 
   @override
+  State<CihazBakimApp> createState() => _CihazBakimAppState();
+}
+
+class _CihazBakimAppState extends State<CihazBakimApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    themeTick.addListener(_repaintAll);
+  }
+
+  @override
+  void dispose() {
+    themeTick.removeListener(_repaintAll);
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangePlatformBrightness() {
+    if (widget.state.settings.theme == 'system') applyThemeMode('system');
+  }
+
+  /// Renkler AppColors'tan doğrudan okunduğu için tema değişince her öğeyi yeniden çiz
+  /// (sayfa ve kaydırma konumu korunur).
+  void _repaintAll() {
+    if (!mounted) return;
+    setState(() {});
+    void mark(Element e) {
+      e.markNeedsBuild();
+      e.visitChildren(mark);
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) (context as Element).visitChildren(mark);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return AppScope(
-      state: state,
+      state: widget.state,
       child: MaterialApp(
         title: 'Harrier Cleaner',
         debugShowCheckedModeBanner: false,

@@ -40,7 +40,7 @@ class DiskMapScreen extends StatelessWidget {
             icon: const Icon(Icons.arrow_upward, size: 18),
             label: Text(L.t('Üst klasör', 'Up one level')),
           ),
-        Text(state.usageRoot, style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.text)),
+        Text(state.usageRoot, style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.text)),
       ],
     );
 

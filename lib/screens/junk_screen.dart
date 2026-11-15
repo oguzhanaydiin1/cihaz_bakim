@@ -122,7 +122,7 @@ class _JunkRow extends StatelessWidget {
                 children: [
                   Text(c.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 3),
-                  Text('${c.description}$countText', style: const TextStyle(fontSize: 13, color: AppColors.muted)),
+                  Text('${c.description}$countText', style: TextStyle(fontSize: 13, color: AppColors.muted)),
                   if (warning != null) ...[const SizedBox(height: 6), Tag(warning)],
                 ],
               ),

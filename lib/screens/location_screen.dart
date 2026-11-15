@@ -104,7 +104,7 @@ class LocationScreen extends StatelessWidget {
       if (photos.length > maxShown) {
         children.add(Text(
           L.t('İlk $maxShown fotoğraf gösteriliyor; seçim tümüne uygulanır.', 'Showing the first $maxShown photos; your selection applies to all.'),
-          style: const TextStyle(color: AppColors.muted, fontSize: 13),
+          style: TextStyle(color: AppColors.muted, fontSize: 13),
         ));
       }
     }
@@ -149,14 +149,14 @@ class _GpsRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(baseName(photo.path), overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600)),
-                  Text(photo.path, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: AppColors.muted)),
+                  Text(photo.path, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12, color: AppColors.muted)),
                 ],
               ),
             ),
             const SizedBox(width: 12),
-            const Icon(Icons.location_on_outlined, size: 16, color: AppColors.warnText),
+            Icon(Icons.location_on_outlined, size: 16, color: AppColors.warnText),
             const SizedBox(width: 4),
-            Text(photo.coordinates, style: const TextStyle(fontSize: 13, color: AppColors.warnText, fontWeight: FontWeight.w600)),
+            Text(photo.coordinates, style: TextStyle(fontSize: 13, color: AppColors.warnText, fontWeight: FontWeight.w600)),
             const SizedBox(width: 8),
           ],
         ),

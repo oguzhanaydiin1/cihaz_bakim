@@ -67,6 +67,19 @@ class SettingsScreen extends StatelessWidget {
               onSelectionChanged: (v) => state.setLanguage(v.first),
             ),
             const SizedBox(height: 14),
+            Text(L.t('Tema', 'Theme'), style: const TextStyle(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
+            SegmentedButton<String>(
+              segments: [
+                ButtonSegment(value: 'light', label: Text(L.t('Açık', 'Light'))),
+                ButtonSegment(value: 'dark', label: Text(L.t('Koyu', 'Dark'))),
+                ButtonSegment(value: 'system', label: Text(L.t('Sisteme uy', 'Match system'))),
+              ],
+              selected: {s.theme},
+              showSelectedIcon: false,
+              onSelectionChanged: (v) => state.setTheme(v.first),
+            ),
+            const SizedBox(height: 14),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               value: s.autoUpdate,
@@ -143,7 +156,7 @@ class SettingsScreen extends StatelessWidget {
             Text(
               L.t('Bundan küçük dosyalar karşılaştırılmaz. Büyük değer taramayı hızlandırır.',
                   'Smaller files aren’t compared. A larger value makes scanning faster.'),
-              style: const TextStyle(color: AppColors.muted, fontSize: 13),
+              style: TextStyle(color: AppColors.muted, fontSize: 13),
             ),
             const SizedBox(height: 10),
             SegmentedButton<int>(
@@ -159,13 +172,13 @@ class SettingsScreen extends StatelessWidget {
               Text(
                 L.t('Bu klasörlerin içine hiç girilmez. Örneğin yedek veya proje klasörleri.',
                     'These folders are never searched, for example backups or project folders.'),
-                style: const TextStyle(color: AppColors.muted, fontSize: 13),
+                style: TextStyle(color: AppColors.muted, fontSize: 13),
               ),
               const SizedBox(height: 8),
               for (final path in s.excluded)
                 Row(
                   children: [
-                    const Icon(Icons.folder_off_outlined, size: 18, color: AppColors.muted),
+                    Icon(Icons.folder_off_outlined, size: 18, color: AppColors.muted),
                     const SizedBox(width: 10),
                     Expanded(child: Text(path, overflow: TextOverflow.ellipsis)),
                     IconButton(
@@ -198,7 +211,7 @@ class SettingsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             if (s.history.isEmpty)
-              Text(L.t('Henüz temizlik yapılmadı.', 'No cleanups yet.'), style: const TextStyle(color: AppColors.muted))
+              Text(L.t('Henüz temizlik yapılmadı.', 'No cleanups yet.'), style: TextStyle(color: AppColors.muted))
             else ...[
               for (final h in s.history.take(20)) _HistoryRow(entry: h),
               const SizedBox(height: 8),
@@ -216,7 +229,7 @@ class SettingsScreen extends StatelessWidget {
         if (state.store.path != null)
           Text(
             L.t('Ayar dosyası: ${state.store.path}', 'Settings file: ${state.store.path}'),
-            style: const TextStyle(color: AppColors.muted, fontSize: 12),
+            style: TextStyle(color: AppColors.muted, fontSize: 12),
           ),
       ],
     );
@@ -260,7 +273,7 @@ class _HistoryRow extends StatelessWidget {
         children: [
           SizedBox(
             width: 130,
-            child: Text(formatTime(entry.date), style: const TextStyle(color: AppColors.muted, fontSize: 13)),
+            child: Text(formatTime(entry.date), style: TextStyle(color: AppColors.muted, fontSize: 13)),
           ),
           Expanded(child: Text(entry.title)),
           Text(formatBytes(entry.bytes), style: const TextStyle(fontWeight: FontWeight.w700)),

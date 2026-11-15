@@ -30,7 +30,7 @@ class ComingSoonScreen extends StatelessWidget {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Padding(
+                        Padding(
                           padding: EdgeInsets.only(top: 7),
                           child: Icon(Icons.circle, size: 6, color: AppColors.muted),
                         ),

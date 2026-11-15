@@ -204,12 +204,16 @@ class AppSettings {
     this.sendErrorReports = true,
     this.autoUpdate = true,
     this.installId = '',
+    this.theme = 'light',
   })  : excluded = excluded ?? [],
         customRoots = customRoots ?? [],
         history = history ?? [];
 
   /// 'system', 'tr' veya 'en'
   String language;
+
+  /// Tema: 'light', 'dark' veya 'system' (işletim sisteminin açık/koyu ayarına uyar).
+  String theme;
 
   /// Beklenmeyen hatalar isimsiz olarak geliştiriciye gönderilsin mi?
   bool sendErrorReports;
@@ -245,6 +249,7 @@ class AppSettings {
         'sendErrorReports': sendErrorReports,
         'autoUpdate': autoUpdate,
         'installId': installId,
+        'theme': theme,
       };
 
   factory AppSettings.fromJson(Map<String, dynamic> j) => AppSettings(
@@ -257,6 +262,7 @@ class AppSettings {
         sendErrorReports: j['sendErrorReports'] as bool? ?? true,
         autoUpdate: j['autoUpdate'] as bool? ?? true,
         installId: j['installId'] as String? ?? '',
+        theme: j['theme'] as String? ?? 'light',
       );
 }
 

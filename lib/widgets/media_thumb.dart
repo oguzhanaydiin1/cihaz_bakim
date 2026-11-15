@@ -194,10 +194,10 @@ Future<void> showMediaPreview(BuildContext context, String path) {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(baseName(path), overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600)),
-                        Text(path, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: AppColors.muted)),
+                        Text(path, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12, color: AppColors.muted)),
                         if (isVideoPath(path))
                           Text(L.t('Videonun kapak karesi gösteriliyor.', 'Showing the video’s cover frame.'),
-                              style: const TextStyle(fontSize: 12, color: AppColors.muted)),
+                              style: TextStyle(fontSize: 12, color: AppColors.muted)),
                       ],
                     ),
                   ),

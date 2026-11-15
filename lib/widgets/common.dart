@@ -39,7 +39,7 @@ class ModulePage extends StatelessWidget {
                     if (!narrow)
                       Text(
                         title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.w800,
                           color: AppColors.text,
@@ -49,7 +49,7 @@ class ModulePage extends StatelessWidget {
                     if (sub != null)
                       Padding(
                         padding: EdgeInsets.only(top: narrow ? 0 : 6),
-                        child: Text(sub, style: const TextStyle(fontSize: 15, color: AppColors.muted, height: 1.5)),
+                        child: Text(sub, style: TextStyle(fontSize: 15, color: AppColors.muted, height: 1.5)),
                       ),
                     const SizedBox(height: 22),
                     const MediaAccessBanner(),
@@ -105,7 +105,7 @@ class ActionBar extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(color: AppColors.navText, fontSize: 13)),
+                Text(label, style: TextStyle(color: AppColors.navText, fontSize: 13)),
                 const SizedBox(height: 2),
                 Text(value, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800)),
               ],
@@ -125,9 +125,11 @@ class ActionBar extends StatelessWidget {
 }
 
 class Tag extends StatelessWidget {
-  const Tag(this.text, {super.key, this.background = AppColors.warnBg, this.foreground = AppColors.warnText});
+  Tag(this.text, {super.key, Color? background, Color? foreground})
+      : background = background ?? AppColors.warnBg,
+        foreground = foreground ?? AppColors.warnText;
 
-  const Tag.keep(this.text, {super.key})
+  Tag.keep(this.text, {super.key})
       : background = AppColors.keepBg,
         foreground = AppColors.keepText;
 
@@ -162,7 +164,7 @@ class EmptyState extends StatelessWidget {
           children: [
             Icon(icon, size: 40, color: AppColors.muted),
             const SizedBox(height: 12),
-            Text(text, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.muted, fontSize: 15, height: 1.5)),
+            Text(text, textAlign: TextAlign.center, style: TextStyle(color: AppColors.muted, fontSize: 15, height: 1.5)),
             if (a != null) ...[const SizedBox(height: 18), a],
           ],
         ),
@@ -185,7 +187,7 @@ class BusyCard extends StatelessWidget {
           children: [
             const CircularProgressIndicator(),
             const SizedBox(height: 16),
-            Text(text, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.muted)),
+            Text(text, textAlign: TextAlign.center, style: TextStyle(color: AppColors.muted)),
           ],
         ),
       ),
@@ -242,14 +244,14 @@ class ProgressCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            Text(line.isEmpty ? L.t('Başlatılıyor…', 'Starting…') : line, style: const TextStyle(fontSize: 14, color: AppColors.text)),
+            Text(line.isEmpty ? L.t('Başlatılıyor…', 'Starting…') : line, style: TextStyle(fontSize: 14, color: AppColors.text)),
             if (p.current.isNotEmpty) ...[
               const SizedBox(height: 4),
               Text(
                 p.current,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 12, color: AppColors.muted),
+                style: TextStyle(fontSize: 12, color: AppColors.muted),
               ),
             ],
             if (cancel != null) ...[
@@ -273,7 +275,7 @@ class AdminBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
-      decoration: BoxDecoration(color: const Color(0xFFEFF4FF), borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(color: AppColors.infoBg, borderRadius: BorderRadius.circular(12)),
       child: Wrap(
         spacing: 12,
         runSpacing: 8,
@@ -285,9 +287,9 @@ class AdminBanner extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.admin_panel_settings_outlined, size: 20, color: AppColors.accent),
+                Icon(Icons.admin_panel_settings_outlined, size: 20, color: AppColors.accent),
                 const SizedBox(width: 10),
-                Flexible(child: Text(message, style: const TextStyle(fontSize: 13, height: 1.4, color: Color(0xFF1E3A8A)))),
+                Flexible(child: Text(message, style: TextStyle(fontSize: 13, height: 1.4, color: AppColors.infoText))),
               ],
             ),
           ),
@@ -381,7 +383,7 @@ class FolderBar extends StatelessWidget {
           icon: const Icon(Icons.folder_open_outlined, size: 18),
           label: Text(L.t('Klasör seç', 'Choose folder')),
         ),
-        Text(path, style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.text)),
+        Text(path, style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.text)),
       ],
     );
   }
@@ -433,7 +435,7 @@ class MediaAccessBanner extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 18),
       child: Container(
         padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
-        decoration: BoxDecoration(color: const Color(0xFFEFF4FF), borderRadius: BorderRadius.circular(12)),
+        decoration: BoxDecoration(color: AppColors.infoBg, borderRadius: BorderRadius.circular(12)),
         child: Wrap(
           spacing: 12,
           runSpacing: 8,
@@ -445,9 +447,9 @@ class MediaAccessBanner extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.photo_library_outlined, size: 20, color: AppColors.accent),
+                  Icon(Icons.photo_library_outlined, size: 20, color: AppColors.accent),
                   const SizedBox(width: 10),
-                  Flexible(child: Text(message, style: const TextStyle(fontSize: 13, height: 1.4, color: Color(0xFF1E3A8A)))),
+                  Flexible(child: Text(message, style: TextStyle(fontSize: 13, height: 1.4, color: AppColors.infoText))),
                 ],
               ),
             ),
