@@ -1,4 +1,4 @@
-Düzeltme sürümü.
+Koyu tema geldi.
 
-- Medya Küçültücü ve Konum Bilgisi Temizleyici'de "Klasör seç" düğmesi, OneDrive yedeklemesi açık olan bilgisayarlarda pencereyi açmıyordu. Düzeltildi.
-- Bu ekranlar artık Resimler klasörünün gerçek yerini (ör. OneDrive\Resimler) kullanıyor.
+- Ayarlar → Genel → Tema: Açık, Koyu ya da Sisteme uy. "Sisteme uy" seçiliyse Windows'un (ya da telefonun) açık/koyu ayarı değişince uygulama da kendiliğinden değişir.
+- Hakkında ekranındaki OA Labs mührü iki temada da doğru renkte görünür.

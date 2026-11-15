@@ -43,7 +43,7 @@ class AboutScreen extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         L.t('Sürüm ${AppInfo.version}', 'Version ${AppInfo.version}'),
-                        style: const TextStyle(color: AppColors.muted, fontSize: 15),
+                        style: TextStyle(color: AppColors.muted, fontSize: 15),
                       ),
                       const SizedBox(height: 12),
                       Text(
@@ -73,8 +73,8 @@ class AboutScreen extends StatelessWidget {
                   children: [
                     OALabsSeal(
                       size: 88,
-                      color: AppColors.nav,
-                      accent: const Color(0xFFC97A16),
+                      color: AppColors.text,
+                      accent: AppColors.sealAccent,
                       text: L.t(
                         'OA LABS · ATÖLYE · 2026 · OA LABS · ATÖLYE · 2026 · ',
                         'OA LABS · WORKSHOP · 2026 · OA LABS · WORKSHOP · 2026 · ',
@@ -116,7 +116,7 @@ class AboutScreen extends StatelessWidget {
                 const SizedBox(height: 16),
                 Text(
                   '© ${AppInfo.copyrightYear} ${AppInfo.developer} · ${AppInfo.company}',
-                  style: const TextStyle(fontSize: 12, color: AppColors.muted),
+                  style: TextStyle(fontSize: 12, color: AppColors.muted),
                 ),
               ],
             ),
@@ -186,7 +186,7 @@ class _UpdateCard extends StatelessWidget {
             ),
             if (detail.isNotEmpty) ...[
               const SizedBox(height: 8),
-              Text(detail, style: const TextStyle(color: AppColors.muted, height: 1.5)),
+              Text(detail, style: TextStyle(color: AppColors.muted, height: 1.5)),
             ],
             if (state.updateStatus == UpdateStatus.downloading) ...[
               const SizedBox(height: 12),
@@ -228,7 +228,7 @@ class _Row extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(
         children: [
-          SizedBox(width: 140, child: Text(label, style: const TextStyle(color: AppColors.muted))),
+          SizedBox(width: 140, child: Text(label, style: TextStyle(color: AppColors.muted))),
           Expanded(child: Text(value, style: const TextStyle(fontWeight: FontWeight.w600))),
         ],
       ),

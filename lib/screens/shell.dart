@@ -137,7 +137,7 @@ class Sidebar extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(12, 16, 12, 6),
           child: Text(
             m.group.label.toUpperCase(),
-            style: const TextStyle(color: AppColors.navLabel, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1),
+            style: TextStyle(color: AppColors.navLabel, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1),
           ),
         ));
       }
@@ -190,12 +190,12 @@ class _NavItem extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                       decoration: BoxDecoration(
-                        color: active ? const Color(0xFF334155) : AppColors.navItem,
+                        color: active ? AppColors.navItemActive : AppColors.navItem,
                         borderRadius: BorderRadius.circular(99),
                       ),
                       child: Text(
                         'v${module.version}',
-                        style: const TextStyle(color: AppColors.navLabel, fontSize: 10, fontWeight: FontWeight.w700),
+                        style: TextStyle(color: AppColors.navLabel, fontSize: 10, fontWeight: FontWeight.w700),
                       ),
                     ),
                 ],

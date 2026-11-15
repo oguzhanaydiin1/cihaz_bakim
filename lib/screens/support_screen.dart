@@ -84,7 +84,7 @@ class SupportScreen extends StatelessWidget {
                           const Text(AppInfo.developer, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
                           Text(
                             L.t('Yazılım Geliştirici · ${AppInfo.company}', 'Software Developer · ${AppInfo.company}'),
-                            style: const TextStyle(color: AppColors.muted),
+                            style: TextStyle(color: AppColors.muted),
                           ),
                         ],
                       ),
@@ -131,7 +131,7 @@ class SupportScreen extends StatelessWidget {
                     'Your email app opens with a draft that already includes the app version and device details. '
                         'You can also copy the error log into your email; it makes finding the problem much easier.',
                   ),
-                  style: const TextStyle(color: AppColors.muted, height: 1.5),
+                  style: TextStyle(color: AppColors.muted, height: 1.5),
                 ),
                 const SizedBox(height: 16),
                 Wrap(
@@ -156,7 +156,7 @@ class SupportScreen extends StatelessWidget {
                       ? L.t('Bu oturumda hata kaydedilmedi.', 'No errors recorded in this session.')
                       : L.t('Bu oturumda ${ErrorReporter.recent.length} hata kaydedildi.',
                           '${ErrorReporter.recent.length} errors recorded in this session.'),
-                  style: const TextStyle(fontSize: 12, color: AppColors.muted),
+                  style: TextStyle(fontSize: 12, color: AppColors.muted),
                 ),
               ],
             ),
@@ -262,9 +262,9 @@ class _LinkRow extends StatelessWidget {
           children: [
             Icon(icon, size: 20, color: AppColors.muted),
             const SizedBox(width: 12),
-            SizedBox(width: 150, child: Text(label, style: const TextStyle(color: AppColors.muted))),
-            Expanded(child: Text(value, style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.accent))),
-            const Icon(Icons.open_in_new, size: 16, color: AppColors.muted),
+            SizedBox(width: 150, child: Text(label, style: TextStyle(color: AppColors.muted))),
+            Expanded(child: Text(value, style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.accent))),
+            Icon(Icons.open_in_new, size: 16, color: AppColors.muted),
           ],
         ),
       ),
@@ -285,7 +285,7 @@ class _Faq extends StatelessWidget {
       childrenPadding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
       expandedAlignment: Alignment.centerLeft,
       title: Text(question, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
-      children: [Text(answer, style: const TextStyle(color: AppColors.muted, height: 1.5))],
+      children: [Text(answer, style: TextStyle(color: AppColors.muted, height: 1.5))],
     );
   }
 }

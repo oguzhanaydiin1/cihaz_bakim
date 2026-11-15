@@ -116,7 +116,7 @@ class _SystemScreenState extends State<SystemScreen> {
           Text(
             L.t('Android, uygulamaların işlemci kullanımını, ekran kartını ve disk hızını okumasına izin vermez. İşlemci kartında anlık hız, grafikte bu hızın en yüksek hıza oranı gösterilir. Sıcaklık, pilin sıcaklığıdır.',
                 'Android doesn’t let apps read processor usage, graphics or disk speed. The processor card shows the current speed, and the chart shows it as a share of the maximum. The temperature is the battery’s.'),
-            style: const TextStyle(fontSize: 12, color: AppColors.muted, height: 1.5),
+            style: TextStyle(fontSize: 12, color: AppColors.muted, height: 1.5),
           )
         else
         Text(
@@ -153,7 +153,7 @@ class _LiveTile extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: const TextStyle(fontSize: 13, color: AppColors.muted, fontWeight: FontWeight.w600)),
+            Text(title, style: TextStyle(fontSize: 13, color: AppColors.muted, fontWeight: FontWeight.w600)),
             const SizedBox(height: 6),
             Text(value, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800)),
             const SizedBox(height: 2),
@@ -161,7 +161,7 @@ class _LiveTile extends StatelessWidget {
               detail,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 12, color: AppColors.muted),
+              style: TextStyle(fontSize: 12, color: AppColors.muted),
             ),
             if (h != null) ...[
               const SizedBox(height: 12),
@@ -214,7 +214,7 @@ class _SparklinePainter extends CustomPainter {
       ..lineTo(startX, size.height)
       ..close();
 
-    canvas.drawPath(area, Paint()..color = const Color(0x1F1D4ED8));
+    canvas.drawPath(area, Paint()..color = AppColors.chartFill);
     canvas.drawPath(
       line,
       Paint()
@@ -274,7 +274,7 @@ class _HardwareCard extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(width: 150, child: Text(label, style: const TextStyle(color: AppColors.muted))),
+                    SizedBox(width: 150, child: Text(label, style: TextStyle(color: AppColors.muted))),
                     Expanded(child: Text(value, style: const TextStyle(fontWeight: FontWeight.w600))),
                   ],
                 ),

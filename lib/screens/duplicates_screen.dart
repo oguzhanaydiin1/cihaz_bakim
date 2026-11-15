@@ -76,7 +76,7 @@ class DuplicatesScreen extends StatelessWidget {
                 Text(
                   L.t('${formatBytes(state.settings.minDuplicateSize)} altındaki dosyalar atlanır', 'Files under ${formatBytes(state.settings.minDuplicateSize)} are skipped') +
                       (state.settings.excluded.isEmpty ? '' : L.t(' · ${state.settings.excluded.length} klasör hariç', ' · ${state.settings.excluded.length} folders excluded')),
-                  style: const TextStyle(color: AppColors.muted, fontSize: 13),
+                  style: TextStyle(color: AppColors.muted, fontSize: 13),
                 ),
                 TextButton(onPressed: () => state.open(ModuleId.settings), child: Text(L.t('Değiştir', 'Change'))),
               ],
@@ -124,7 +124,7 @@ class DuplicatesScreen extends StatelessWidget {
       if (dupes.length > maxGroups) {
         children.add(Text(
           L.t('En çok yer kaplayan $maxGroups grup gösteriliyor.', 'Showing the $maxGroups largest groups.'),
-          style: const TextStyle(color: AppColors.muted, fontSize: 13),
+          style: TextStyle(color: AppColors.muted, fontSize: 13),
         ));
       }
     }
@@ -175,7 +175,7 @@ class _GroupView extends StatelessWidget {
               const SizedBox(width: 12),
               Text(
                 L.t('${group.files.length} kopya · her biri ${formatBytes(group.size)}', '${group.files.length} copies · ${formatBytes(group.size)} each'),
-                style: const TextStyle(color: AppColors.muted, fontSize: 13),
+                style: TextStyle(color: AppColors.muted, fontSize: 13),
               ),
             ],
           ),
@@ -196,7 +196,7 @@ class _GroupView extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(f.path, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 14)),
-                        Text(L.t('Değiştirilme: ${formatTime(f.modified)}', 'Modified: ${formatTime(f.modified)}'), style: const TextStyle(fontSize: 12, color: AppColors.muted)),
+                        Text(L.t('Değiştirilme: ${formatTime(f.modified)}', 'Modified: ${formatTime(f.modified)}'), style: TextStyle(fontSize: 12, color: AppColors.muted)),
                       ],
                     ),
                   ),

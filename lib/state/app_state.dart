@@ -6,6 +6,7 @@ import 'package:flutter/widgets.dart';
 
 import '../core/i18n.dart';
 import '../core/modules.dart';
+import '../core/theme.dart' show applyThemeMode;
 import '../models/models.dart';
 import '../services/cleaner_service.dart';
 import '../services/isolate_runner.dart';
@@ -31,6 +32,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   Future<void> init() async {
     settings = await store.load();
     L.apply(language);
+    applyThemeMode(settings.theme);
     if (settings.installId.isEmpty) {
       final r = math.Random.secure();
       settings.installId = List.generate(16, (_) => r.nextInt(256).toRadixString(16).padLeft(2, '0')).join();
@@ -744,6 +746,13 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   Future<void> setLanguage(AppLanguage value) async {
     settings.language = value.name;
     L.apply(value);
+    notifyListeners();
+    await store.save(settings);
+  }
+
+  Future<void> setTheme(String value) async {
+    settings.theme = value;
+    applyThemeMode(value);
     notifyListeners();
     await store.save(settings);
   }

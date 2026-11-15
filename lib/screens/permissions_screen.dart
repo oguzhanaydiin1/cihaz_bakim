@@ -71,7 +71,7 @@ class _PermissionsScreenState extends State<PermissionsScreen> {
           'Windows doesn’t let you turn off permissions for individual desktop programs, only for all of them at once. '
               'Store apps can be managed one by one. Use “Open settings” to make changes.',
         ),
-        style: const TextStyle(fontSize: 12, color: AppColors.muted, height: 1.5),
+        style: TextStyle(fontSize: 12, color: AppColors.muted, height: 1.5),
       ));
       children.add(Align(
         alignment: Alignment.centerLeft,
@@ -131,7 +131,7 @@ class _KindCard extends StatelessWidget {
                 if (on != null)
                   on
                       ? Tag(L.t('Açık', 'On'), background: AppColors.keepBg, foreground: AppColors.keepText)
-                      : Tag(L.t('Kapalı', 'Off'), background: const Color(0xFFF3F4F6), foreground: const Color(0xFF374151)),
+                      : Tag(L.t('Kapalı', 'Off'), background: AppColors.tagBg, foreground: AppColors.tagText),
                 const SizedBox(width: 10),
                 TextButton.icon(
                   onPressed: onSettings,
@@ -147,7 +147,7 @@ class _KindCard extends StatelessWidget {
               padding: const EdgeInsets.all(22),
               child: Text(
                 L.t('Bu izni kullanan uygulama kaydı yok.', 'No apps have used this permission.'),
-                style: const TextStyle(color: AppColors.muted),
+                style: TextStyle(color: AppColors.muted),
               ),
             )
           else
@@ -192,21 +192,21 @@ class _UseRow extends StatelessWidget {
                   use.detail,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 12, color: AppColors.muted),
+                  style: TextStyle(fontSize: 12, color: AppColors.muted),
                 ),
               ],
             ),
           ),
           const SizedBox(width: 12),
           if (use.inUse)
-            Tag(L.t('Şu an kullanıyor', 'In use now'), background: const Color(0xFFFEE2E2), foreground: const Color(0xFFB91C1C))
+            Tag(L.t('Şu an kullanıyor', 'In use now'), background: AppColors.dangerBg, foreground: AppColors.dangerText)
           else if (when != null)
-            Text(when, style: const TextStyle(fontSize: 13, color: AppColors.muted)),
+            Text(when, style: TextStyle(fontSize: 13, color: AppColors.muted)),
           if (use.storeApp && !use.allowed) ...[
             const SizedBox(width: 10),
-            Tag(L.t('Engelli', 'Blocked'), background: const Color(0xFFF3F4F6), foreground: const Color(0xFF374151)),
+            Tag(L.t('Engelli', 'Blocked'), background: AppColors.tagBg, foreground: AppColors.tagText),
           ],
-          if (phone) const Icon(Icons.chevron_right, color: AppColors.muted),
+          if (phone) Icon(Icons.chevron_right, color: AppColors.muted),
         ],
       ),
     );

@@ -185,7 +185,7 @@ class MediaScreen extends StatelessWidget {
       if (photos.length > maxShown) {
         children.add(Text(
           L.t('En büyük $maxShown fotoğraf gösteriliyor; seçim tümüne uygulanır.', 'Showing the $maxShown largest photos; your selection applies to all.'),
-          style: const TextStyle(color: AppColors.muted, fontSize: 13),
+          style: TextStyle(color: AppColors.muted, fontSize: 13),
         ));
       }
     }
@@ -230,7 +230,7 @@ class _PhotoRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(baseName(photo.path), overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600)),
-                  Text(photo.path, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: AppColors.muted)),
+                  Text(photo.path, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12, color: AppColors.muted)),
                 ],
               ),
             ),

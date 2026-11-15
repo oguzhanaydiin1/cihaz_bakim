@@ -65,10 +65,10 @@ class SmartScanScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 10),
                       ],
-                      Text(step, style: const TextStyle(color: AppColors.muted, fontSize: 14)),
+                      Text(step, style: TextStyle(color: AppColors.muted, fontSize: 14)),
                       if (live.isNotEmpty) ...[
                         const SizedBox(height: 4),
-                        Text(live, style: const TextStyle(color: AppColors.text, fontSize: 13)),
+                        Text(live, style: TextStyle(color: AppColors.text, fontSize: 13)),
                       ],
                       if (state.scanning && progress != null && progress.current.isNotEmpty) ...[
                         const SizedBox(height: 2),
@@ -76,7 +76,7 @@ class SmartScanScreen extends StatelessWidget {
                           progress.current,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: AppColors.muted, fontSize: 12),
+                          style: TextStyle(color: AppColors.muted, fontSize: 12),
                         ),
                       ],
                       const SizedBox(height: 18),
@@ -139,7 +139,7 @@ class _StorageRing extends StatelessWidget {
                     known ? '%${(ratio * 100).round()}' : '—',
                     style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800),
                   ),
-                  Text(label, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, color: AppColors.muted)),
+                  Text(label, textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: AppColors.muted)),
                 ],
               ),
             ),
@@ -199,7 +199,7 @@ class _Summary extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(c.label, style: const TextStyle(fontSize: 13, color: AppColors.muted, fontWeight: FontWeight.w600)),
+                      Text(c.label, style: TextStyle(fontSize: 13, color: AppColors.muted, fontWeight: FontWeight.w600)),
                       const SizedBox(height: 8),
                       Text(
                         c.value,
@@ -210,7 +210,7 @@ class _Summary extends StatelessWidget {
                       const SizedBox(height: 8),
                       Text(
                         c.action,
-                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.accent),
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.accent),
                       ),
                     ],
                   ),

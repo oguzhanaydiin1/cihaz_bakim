@@ -164,7 +164,7 @@ class _AppsScreenState extends State<AppsScreen> {
                   prefixIcon: const Icon(Icons.search),
                   isDense: true,
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: AppColors.surface,
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
@@ -226,7 +226,7 @@ class _AppRow extends StatelessWidget {
                 Text(app.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
                 if (details.isNotEmpty) ...[
                   const SizedBox(height: 3),
-                  Text(details, style: const TextStyle(fontSize: 13, color: AppColors.muted)),
+                  Text(details, style: TextStyle(fontSize: 13, color: AppColors.muted)),
                 ],
               ],
             ),
@@ -260,7 +260,7 @@ class _AppIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final service = AppScope.of(context).service;
-    const fallback = SizedBox(width: 40, height: 40, child: Icon(Icons.apps_outlined, color: AppColors.muted));
+    final fallback = SizedBox(width: 40, height: 40, child: Icon(Icons.apps_outlined, color: AppColors.muted));
     if (service.isDesktop || service.isSample) return fallback;
     final future = _cache.putIfAbsent(app.registryKey, () => service.appIcon(app, size: 120));
     return SizedBox(

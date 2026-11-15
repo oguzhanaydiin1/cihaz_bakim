@@ -80,7 +80,7 @@ class _BatteryCard extends StatelessWidget {
         ? (L.t('İyi durumda', 'Good condition'), AppColors.keepText)
         : pct >= 60
             ? (L.t('Yıpranmış', 'Worn'), AppColors.warnText)
-            : (L.t('Değiştirmeyi düşünebilirsiniz', 'Consider replacing it'), const Color(0xFFB91C1C));
+            : (L.t('Değiştirmeyi düşünebilirsiniz', 'Consider replacing it'), AppColors.dangerText);
     String wh(int mwh) => '${formatDecimal(mwh / 1000, 1)} Wh';
     final report = onReport;
 
@@ -110,7 +110,7 @@ class _BatteryCard extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(L.t('%$pct', '$pct%'), style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800)),
-                        Text(L.t('pil sağlığı', 'battery health'), style: const TextStyle(fontSize: 12, color: AppColors.muted)),
+                        Text(L.t('pil sağlığı', 'battery health'), style: TextStyle(fontSize: 12, color: AppColors.muted)),
                       ],
                     ),
                   ),
@@ -162,8 +162,8 @@ class _DiskCard extends StatelessWidget {
     final (label, bg, fg) = switch (disk.status.toLowerCase()) {
       'healthy' => (L.t('Sağlıklı', 'Healthy'), AppColors.keepBg, AppColors.keepText),
       'warning' => (L.t('Uyarı', 'Warning'), AppColors.warnBg, AppColors.warnText),
-      'unhealthy' => (L.t('Sorunlu', 'Unhealthy'), const Color(0xFFFEE2E2), const Color(0xFFB91C1C)),
-      _ => (L.t('Bilinmiyor', 'Unknown'), const Color(0xFFF3F4F6), const Color(0xFF374151)),
+      'unhealthy' => (L.t('Sorunlu', 'Unhealthy'), AppColors.dangerBg, AppColors.dangerText),
+      _ => (L.t('Bilinmiyor', 'Unknown'), AppColors.tagBg, AppColors.tagText),
     };
     final type = [
       if (disk.mediaType.isNotEmpty && disk.mediaType != 'Unspecified') disk.mediaType,
@@ -179,7 +179,7 @@ class _DiskCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.storage_outlined, color: AppColors.muted),
+                Icon(Icons.storage_outlined, color: AppColors.muted),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(disk.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
@@ -191,7 +191,7 @@ class _DiskCard extends StatelessWidget {
               const SizedBox(height: 4),
               Padding(
                 padding: const EdgeInsets.only(left: 34),
-                child: Text(type, style: const TextStyle(fontSize: 13, color: AppColors.muted)),
+                child: Text(type, style: TextStyle(fontSize: 13, color: AppColors.muted)),
               ),
             ],
             if (disk.temperature != null || disk.wear != null || disk.powerOnHours != null) ...[
@@ -227,7 +227,7 @@ class _InfoLine extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
         children: [
-          Expanded(child: Text(label, style: const TextStyle(color: AppColors.muted))),
+          Expanded(child: Text(label, style: TextStyle(color: AppColors.muted))),
           Text(value, style: const TextStyle(fontWeight: FontWeight.w700)),
         ],
       ),
@@ -245,7 +245,7 @@ class _Metric extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 12, color: AppColors.muted)),
+        Text(label, style: TextStyle(fontSize: 12, color: AppColors.muted)),
         Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
       ],
     );
@@ -266,9 +266,9 @@ class _PhoneBatteryCard extends StatelessWidget {
     final temp = b.temperature;
     final (label, color) = switch (b.status) {
       'good' => (L.t('Android’e göre pil sağlıklı', 'Android reports the battery as healthy'), AppColors.keepText),
-      'overheat' => (L.t('Pil aşırı ısınmış', 'The battery is overheating'), const Color(0xFFB91C1C)),
+      'overheat' => (L.t('Pil aşırı ısınmış', 'The battery is overheating'), AppColors.dangerText),
       'cold' => (L.t('Pil çok soğuk', 'The battery is too cold'), AppColors.warnText),
-      'dead' || 'failure' || 'overvoltage' => (L.t('Android pilde sorun bildiriyor', 'Android reports a battery problem'), const Color(0xFFB91C1C)),
+      'dead' || 'failure' || 'overvoltage' => (L.t('Android pilde sorun bildiriyor', 'Android reports a battery problem'), AppColors.dangerText),
       _ => (L.t('Pil durumu bilinmiyor', 'Battery condition unknown'), AppColors.muted),
     };
     final hot = temp != null && temp >= 40;
@@ -300,7 +300,7 @@ class _PhoneBatteryCard extends StatelessWidget {
                         Text(L.t('%$level', '$level%'), style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800)),
                         Text(
                           b.charging == true ? L.t('şarj oluyor', 'charging') : L.t('şarj', 'charge'),
-                          style: const TextStyle(fontSize: 12, color: AppColors.muted),
+                          style: TextStyle(fontSize: 12, color: AppColors.muted),
                         ),
                       ],
                     ),
@@ -326,7 +326,7 @@ class _PhoneBatteryCard extends StatelessWidget {
                   Text(
                     L.t('Android, pilin ilk günkü kapasitesini uygulamalara göstermez; bu yüzden yüzde olarak pil sağlığı hesaplanamaz. Tahmini kapasite, anlık yük ve şarj yüzdesinden hesaplanır ve şarj %20’nin üzerindeyken daha doğrudur.',
                         'Android doesn’t show apps the battery’s original capacity, so a battery health percentage can’t be calculated. The estimated capacity is worked out from the current charge and is more accurate above 20%.'),
-                    style: const TextStyle(fontSize: 13, color: AppColors.muted, height: 1.4),
+                    style: TextStyle(fontSize: 13, color: AppColors.muted, height: 1.4),
                   ),
                 ],
               ),

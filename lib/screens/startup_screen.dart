@@ -128,7 +128,7 @@ class _StartupRow extends StatelessWidget {
                   item.command,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 12, color: AppColors.muted),
+                  style: TextStyle(fontSize: 12, color: AppColors.muted),
                 ),
                 const SizedBox(height: 6),
                 Wrap(
@@ -137,13 +137,13 @@ class _StartupRow extends StatelessWidget {
                   children: [
                     Tag(
                       item.scope == StartupScope.machine ? L.t('Tüm kullanıcılar', 'All users') : L.t('Bu kullanıcı', 'This user'),
-                      background: const Color(0xFFF3F4F6),
-                      foreground: const Color(0xFF374151),
+                      background: AppColors.tagBg,
+                      foreground: AppColors.tagText,
                     ),
                     Tag(
                       item.fromFolder ? L.t('Başlangıç klasörü', 'Startup folder') : L.t('Kayıt defteri', 'Registry'),
-                      background: const Color(0xFFF3F4F6),
-                      foreground: const Color(0xFF374151),
+                      background: AppColors.tagBg,
+                      foreground: AppColors.tagText,
                     ),
                   ],
                 ),
