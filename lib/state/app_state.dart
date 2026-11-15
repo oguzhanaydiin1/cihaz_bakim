@@ -6,6 +6,7 @@ import 'package:flutter/widgets.dart';
 
 import '../core/i18n.dart';
 import '../core/modules.dart';
+import '../core/theme.dart' show applyThemeMode;
 import '../models/models.dart';
 import '../services/cleaner_service.dart';
 import '../services/isolate_runner.dart';
