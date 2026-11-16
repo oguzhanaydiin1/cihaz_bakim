@@ -98,6 +98,11 @@ class AboutScreen extends StatelessWidget {
                   spacing: 10,
                   runSpacing: 10,
                   children: [
+                    FilledButton.icon(
+                      onPressed: () => state.service.openUrl('https://buymeacoffee.com/oalabs'),
+                      icon: const Icon(Icons.coffee_outlined, size: 18),
+                      label: Text(L.t('Bir kahve ısmarla', 'Buy us a coffee')),
+                    ),
                     OutlinedButton(
                       onPressed: () => state.service.openUrl(privacy),
                       child: Text(L.t('Gizlilik politikası', 'Privacy policy')),
@@ -112,6 +117,11 @@ class AboutScreen extends StatelessWidget {
                       child: Text(L.t('Açık kaynak lisansları', 'Open source licenses')),
                     ),
                   ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  L.t('OA Labs uygulamaları ücretsiz ve reklamsız. Beğendiysen bir kahve ısmarlayarak devam etmemize yardım edebilirsin.', 'OA Labs apps are free and ad-free. If you like them, you can help us keep going by buying us a coffee.'),
+                  style: TextStyle(fontSize: 13, color: AppColors.muted),
                 ),
                 const SizedBox(height: 16),
                 Text(

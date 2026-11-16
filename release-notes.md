@@ -1,4 +1,3 @@
-Koyu tema geldi.
+Destek ol düğmesi geldi.
 
-- Ayarlar → Genel → Tema: Açık, Koyu ya da Sisteme uy. "Sisteme uy" seçiliyse Windows'un (ya da telefonun) açık/koyu ayarı değişince uygulama da kendiliğinden değişir.
-- Hakkında ekranındaki OA Labs mührü iki temada da doğru renkte görünür.
+- Hakkında ekranında "Bir kahve ısmarla" düğmesi (Buy Me a Coffee). Uygulama ücretsiz ve reklamsız; isteyen buradan destek olabilir.
